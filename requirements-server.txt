@@ -1,0 +1,7 @@
+Flask
+Flask-Cors
+openai
+python-dotenv
+edge-tts>=7.2.0
+aiohttp>=3.8,<4
+requests

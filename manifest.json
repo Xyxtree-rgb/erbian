@@ -1,0 +1,16 @@
+{
+  "name": "耳辩 · 与尔同辩",
+  "short_name": "耳辩",
+  "description": "在你耳边，与尔同辩 · 沿着渡口走一圈，学点真法律，集齐手记",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#c9ccd0",
+  "theme_color": "#c9ccd0",
+  "icons": [
+    { "src": "assets/icon/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "assets/icon/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "assets/icon/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

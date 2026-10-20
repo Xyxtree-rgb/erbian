@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>耳辩 · 知识库</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700&family=Noto+Sans+SC:wght@200;300;400;500;700&display=swap');
+:root{
+  --ink:#2d2d2d;
+  --ink-60:rgba(45,45,45,.6);
+  --ink-35:rgba(45,45,45,.35);
+  --ink-12:rgba(45,45,45,.12);
+  --iri:linear-gradient(100deg,#7ac8ff,#c9a7ff,#ff9ed2,#ffd9a0,#8ef0d2);
+  --ease:cubic-bezier(.65,0,.35,1);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+  font-family:'Space Grotesk','Noto Sans SC',-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+  background:linear-gradient(160deg,#dfe2e6 0%,#c9ccd0 60%,#d3d6da 100%);
+  color:var(--ink);line-height:1.7;padding:20px;min-height:100vh;
+}
+.bg-fx{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;}
+.aurora{position:absolute;border-radius:50%;filter:blur(90px);opacity:.45;}
+.b1{width:44vmax;height:44vmax;right:-14vmax;top:-12vmax;background:radial-gradient(circle at 45% 45%,#9fd0ff,transparent 65%);}
+.b2{width:38vmax;height:38vmax;left:-12vmax;bottom:-14vmax;background:radial-gradient(circle at 55% 55%,#ffc4e6,transparent 65%);}
+.wrap{max-width:900px;margin:0 auto;position:relative;z-index:1;}
+
+h1{font-size:24px;font-weight:200;letter-spacing:.3em;margin-bottom:4px;}
+.meta{font-size:12px;color:var(--ink-60);letter-spacing:.08em;margin-bottom:20px;}
+.meta b{color:var(--ink);font-weight:700;}
+
+.search-bar{display:flex;gap:8px;margin-bottom:14px;}
+#searchInput{
+  flex:1;font-size:13.5px;padding:12px 18px;font-family:inherit;
+  border:1px solid rgba(255,255,255,.85);border-radius:999px;outline:none;
+  background:rgba(255,255,255,.55);color:var(--ink);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  transition:border-color .2s,box-shadow .2s;
+}
+#searchInput::placeholder{color:var(--ink-35);}
+#searchInput:focus{border-color:rgba(91,141,239,.6);box-shadow:0 0 0 3px rgba(91,141,239,.15);}
+
+.categories{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;}
+.cat-btn{
+  font-family:inherit;font-size:12px;font-weight:500;letter-spacing:.08em;
+  padding:7px 16px;border:1px solid rgba(255,255,255,.75);border-radius:999px;
+  background:rgba(255,255,255,.4);color:var(--ink-60);cursor:pointer;
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  transition:all .18s var(--ease);
+}
+.cat-btn:hover{background:rgba(255,255,255,.75);color:var(--ink);}
+.cat-btn.active{background:#2d2d2d;color:#f2f3f5;border-color:#2d2d2d;}
+
+.case-list{display:flex;flex-direction:column;gap:14px;}
+.case-card{
+  background:rgba(250,251,253,.6);
+  backdrop-filter:blur(24px) saturate(1.3);-webkit-backdrop-filter:blur(24px) saturate(1.3);
+  border:1px solid rgba(255,255,255,.85);border-radius:20px;
+  padding:20px;box-shadow:0 14px 36px rgba(60,70,95,.12);
+  transition:transform .2s var(--ease),box-shadow .2s var(--ease);
+}
+.case-card:hover{transform:translateY(-2px);box-shadow:0 20px 46px rgba(60,70,95,.16);}
+.case-cat{
+  display:inline-block;font-size:10.5px;font-weight:500;letter-spacing:.2em;
+  padding:3px 12px;border-radius:999px;margin-bottom:10px;
+  color:#6a4fc9;border:1px solid rgba(150,120,230,.45);background:rgba(201,167,255,.16);
+}
+.case-title{font-size:16px;font-weight:700;letter-spacing:.03em;margin-bottom:6px;}
+.case-summary{font-size:13px;color:#3d3d3d;margin-bottom:10px;}
+.case-row{font-size:12px;color:var(--ink-60);margin-bottom:6px;}
+.case-row b{color:var(--ink);font-weight:700;}
+.case-source{
+  display:inline-flex;align-items:center;gap:5px;
+  font-size:12px;color:#4a72c4;text-decoration:none;font-family:inherit;
+  border:0;border-bottom:1px dashed rgba(74,114,196,.5);background:none;padding:0;
+  margin-top:6px;cursor:pointer;transition:color .15s;
+}
+.case-source:hover{color:#2d2d2d;border-bottom-style:solid;}
+.source-mask{
+  position:fixed;inset:0;z-index:999;display:none;align-items:center;justify-content:center;
+  padding:16px;background:rgba(24,30,42,.42);backdrop-filter:blur(6px);
+  -webkit-backdrop-filter:blur(6px);
+}
+.source-mask.open{display:flex;}
+body.source-open{overflow:hidden;}
+.source-card{
+  position:relative;width:min(100%,420px);max-height:88vh;overflow:auto;-webkit-overflow-scrolling:touch;
+  background:#fff;border-radius:20px;padding:20px;
+  box-shadow:0 24px 60px rgba(20,25,40,.28);animation:source-pop .22s cubic-bezier(.2,.75,.25,1);
+}
+.source-card.expanded{width:min(100%,560px);}
+@keyframes source-pop{from{transform:translateY(14px) scale(.97);opacity:0;}to{transform:none;opacity:1;}}
+.source-card h3{font-size:15px;margin-bottom:12px;padding-right:34px;color:var(--ink);letter-spacing:.05em;}
+.source-x{
+  position:absolute;top:14px;right:14px;width:30px;height:30px;border-radius:50%;
+  border:0;background:rgba(45,45,45,.06);color:var(--ink-60);font-size:14px;line-height:1;
+  cursor:pointer;font-family:inherit;
+}
+.source-card .row{font-size:13px;line-height:1.75;color:var(--ink-60);margin-bottom:6px;}
+.source-card .row b{color:var(--ink);font-weight:700;}
+.source-card .url{
+  font-size:12px;line-height:1.6;color:#4a72c4;background:rgba(74,114,196,.08);
+  padding:9px 11px;border-radius:10px;word-break:break-all;margin:4px 0 2px;
+  -webkit-user-select:all;user-select:all;
+}
+/* —— 来源缩略图卡：手机端一次点击即可看到内容 —— */
+.source-thumb{
+  display:block;width:100%;border:0;padding:0;background:#fff;cursor:pointer;position:relative;
+  margin:0 0 14px;border-radius:13px;overflow:hidden;text-align:left;font-family:inherit;
+  box-shadow:0 6px 20px rgba(40,50,70,.11),0 0 0 1px rgba(45,45,45,.06);
+  transition:transform .18s var(--ease),box-shadow .18s var(--ease);
+}
+.source-thumb:active{transform:scale(.986);}
+.thumb-chrome{display:flex;align-items:center;gap:5px;padding:7px 10px;background:#f2f3f7;border-bottom:1px solid rgba(45,45,45,.05);}
+.thumb-chrome i{width:6px;height:6px;border-radius:50%;background:#d3d6df;display:block;flex:none;}
+.thumb-chrome em{
+  font-style:normal;font-size:10px;color:#8d92a0;margin-left:6px;flex:1;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.thumb-page{padding:12px 13px 30px;background:linear-gradient(180deg,#fff,#fdfdff);}
+.thumb-brand{font-size:10px;letter-spacing:.16em;color:#6a4fc9;margin-bottom:7px;}
+.thumb-title{
+  font-size:13.5px;font-weight:700;color:#2d2d2d;line-height:1.45;margin-bottom:9px;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+}
+.thumb-lines span{display:block;height:6px;border-radius:3px;background:#edf0f5;margin-bottom:6px;}
+.thumb-lines span:nth-child(2){width:92%;}
+.thumb-lines span.short{width:56%;margin-bottom:0;}
+.thumb-tag{
+  display:inline-block;margin-top:9px;font-size:10.5px;color:#6a4fc9;
+  background:rgba(201,167,255,.20);border-radius:999px;padding:2px 10px;
+}
+.thumb-more{
+  position:absolute;right:10px;bottom:9px;font-size:10.5px;color:#4a72c4;
+  background:rgba(74,114,196,.10);padding:3px 10px;border-radius:999px;letter-spacing:.02em;
+}
+.source-detail{display:none;}
+.source-card.expanded .source-detail{display:block;animation:source-fade .2s ease;}
+@keyframes source-fade{from{opacity:0;transform:translateY(-4px);}to{opacity:1;transform:none;}}
+.source-copy-tip{font-size:12px;color:#3f9d6b;margin-top:10px;min-height:16px;}
+.source-actions{display:flex;gap:10px;margin-top:12px;}
+.source-actions button{
+  flex:1;min-height:44px;border-radius:12px;border:1px solid rgba(45,45,45,.14);
+  background:#fff;color:var(--ink);font-family:inherit;font-size:13px;cursor:pointer;
+}
+.source-actions .primary{background:#2d2d2d;color:#fff;border-color:#2d2d2d;}
+.source-actions button:disabled{opacity:.45;cursor:not-allowed;}
+.source-note{font-size:11.5px;color:var(--ink-35);margin-top:10px;line-height:1.6;}
+@media (max-width:430px){
+  .source-mask{padding:10px;}
+  .source-card{padding:16px;border-radius:16px;}
+  .source-card h3{font-size:14px;margin-bottom:10px;}
+  .source-thumb{margin-bottom:12px;}
+  .thumb-title{font-size:13px;}
+  .source-card .row{font-size:12.5px;line-height:1.7;}
+  .source-actions button{min-height:42px;font-size:12.5px;}
+}
+.empty{
+  text-align:center;padding:40px;color:var(--ink-35);letter-spacing:.1em;
+  background:rgba(255,255,255,.35);border:1px solid rgba(255,255,255,.6);border-radius:20px;
+}
+</style>
+</head>
+<body>
+<div class="bg-fx"><div class="aurora b1"></div><div class="aurora b2"></div></div>
+<div class="wrap">
+  <h1><img src="./assets/icon/text_knowledge.jpg" alt="耳辩 · 知识库" style="height:40px;display:block;margin:0 auto;background:#fff;border-radius:4px;padding:2px 4px;"></h1>
+  <p class="meta">
+    版本 <b id="version">—</b> · 更新 <b id="updated">—</b> · 共 <b id="total">—</b> 条
+  </p>
+
+  <div class="search-bar">
+    <input id="searchInput" placeholder="搜索标题、法条、关键词…" />
+  </div>
+
+  <div class="categories" id="categories"></div>
+
+  <div class="case-list" id="caseList"></div>
+</div>
+
+<div class="source-mask" id="sourceMask" aria-hidden="true">
+  <div class="source-card" id="sourceCard" role="dialog" aria-modal="true" aria-labelledby="sourceTitle">
+    <button type="button" class="source-x" id="sourceCloseX" aria-label="关闭">✕</button>
+    <h3 id="sourceTitle">案例来源</h3>
+
+    <div class="source-thumb" id="sourceThumb" role="button" tabindex="0" aria-label="点亮/收起来源缩略信息">
+      <div class="thumb-chrome"><i></i><i></i><i></i><em id="thumbHost">—</em></div>
+      <div class="thumb-page">
+        <div class="thumb-brand" id="thumbBrand">—</div>
+        <div class="thumb-title" id="thumbTitle">—</div>
+        <div class="thumb-lines"><span></span><span></span><span class="short"></span></div>
+        <div class="thumb-tag" id="thumbTag">相关法条</div>
+      </div>
+      <div class="thumb-more" id="thumbMore">点开查看 ▸</div>
+    </div>
+
+    <div class="row"><b>来源机构：</b><span id="sourceName">—</span></div>
+    <div class="row"><b>发布日期：</b><span id="sourceDate">—</span></div>
+
+    <div class="source-detail" id="sourceDetail">
+      <div class="row"><b>案例摘要：</b><span id="sourceSummary">—</span></div>
+      <div class="row"><b>涉及法条：</b><span id="sourceLaw">—</span></div>
+      <div class="row"><b>处罚结果：</b><span id="sourcePenalty">—</span></div>
+      <div class="row" style="margin-top:10px;"><b>原文链接：</b></div>
+      <div class="url" id="sourceUrl">—</div>
+    </div>
+
+    <p class="source-copy-tip" id="sourceTip"></p>
+    <div class="source-actions">
+      <button type="button" id="sourceCopy">复制链接</button>
+      <button type="button" class="primary" id="sourceClose">返回游戏</button>
+    </div>
+    <p class="source-note">手机上不跳转，就是为了不打断这局辩论；想看原网页可在电脑上打开。</p>
+  </div>
+</div>
+
+<script>
+const API = '/api/knowledge';
+const EMBEDDED_KB = {"version": "1.0", "updated": "2026-10-13", "total": 117, "cases": [{"id": "case_001", "category": "消费纠纷", "title": "销售不合格灭火器案", "summary": "黄某某购进干粉含量不达标的手提式灭火器进行销售，涉案金额14.99万元。", "law": "《产品质量法》第十三条、第四十九条", "penalty": "没收不合格灭火器、处罚没款16.63万元", "source": "市场监管总局", "source_url": "https://www.samr.gov.cn/zt/pgt/art/2026/art_0ec31966d93348bf86c3e0332c8e2501.html", "publish_date": "2026-09-01"}, {"id": "case_002", "category": "消费纠纷", "title": "直播带货虚假宣传案", "summary": "主播宣称商品为全网最低价，实际为普通款，构成虚假宣传。", "law": "《广告法》第四条、第二十八条", "penalty": "责令停止发布广告、罚款", "source": "市场监管总局", "source_url": "https://www.samr.gov.cn/", "publish_date": "2026-08-15"}, {"id": "case_003", "category": "消费纠纷", "title": "职业索赔人恶意敲诈案", "summary": "职业索赔人向商家投放异物，以举报相威胁索要赔偿。", "law": "《刑法》第二百七十四条", "penalty": "以敲诈勒索罪追究刑事责任", "source": "最高人民法院", "source_url": "https://www.court.gov.cn/", "publish_date": "2026-06-20"}, {"id": "case_004", "category": "消费纠纷", "title": "化纤棉絮冒充新疆纯棉案", "summary": "商家将化纤棉絮冒充新疆纯棉销售，构成消费欺诈。", "law": "《消费者权益保护法》第五十五条", "penalty": "退一赔三", "source": "市场监管总局", "source_url": "https://www.samr.gov.cn/", "publish_date": "2026-07-22"}, {"id": "case_005", "category": "消费纠纷", "title": "新能源汽车质量维权案", "summary": "新车两天亮安全气囊故障灯，维修后复发，消费者主张退车。", "law": "《家用汽车产品修理更换退货责任规定》第十八条", "penalty": "支持消费者退车诉求", "source": "市场监管总局", "source_url": "https://www.samr.gov.cn/", "publish_date": "2026-08-01"}, {"id": "case_006", "category": "消费纠纷", "title": "直播间假一赔十手串案", "summary": "主播承诺假一赔十，消费者买到假货后主播拒绝兑现。", "law": "《消费者权益保护法》第五十五条", "penalty": "退一赔三", "source": "市场监管总局", "source_url": "https://www.samr.gov.cn/", "publish_date": "2026-05-18"}, {"id": "case_007", "category": "消费纠纷", "title": "盲盒抽手机诈骗案", "summary": "9位消费者在短视频平台看到89元抽手机广告，加微信转账后被拉黑。", "law": "《广告法》《刑法》", "penalty": "以诈骗罪追究刑事责任", "source": "最高人民检察院", "source_url": "https://www.spp.gov.cn/", "publish_date": "2026-04-12"}, {"id": "case_008", "category": "消费纠纷", "title": "AI虚拟人直播卖保健品案", "summary": "独居老人看了AI主播直播，购买普通食品停掉降压药，脑出血住院。", "law": "《反不正当竞争法》第八条", "penalty": "责令停止违法行为、罚款", "source": "市场监管总局", "source_url": "https://www.samr.gov.cn/", "publish_date": "2026-03-25"}, {"id": "case_009", "category": "生态环保", "title": "餐饮油烟扰民行政处罚案", "summary": "恩施市某餐饮店未安装油烟净化设施，油烟直排影响居民生活。", "law": "《大气污染防治法》第八十一条", "penalty": "责令改正、罚款", "source": "恩施州生态环境局", "source_url": "https://sthjj.enshi.gov.cn/", "publish_date": "2026-05-10"}, {"id": "case_010", "category": "生态环保", "title": "海水养殖尾水污染保护区案", "summary": "惠东县6家养殖场外排尾水总氮、总磷超标，流入大亚湾保护区。", "law": "《海洋环境保护法》", "penalty": "责令整改、行政处罚", "source": "生态环境部", "source_url": "https://www.mee.gov.cn/", "publish_date": "2026-04-22"}, {"id": "case_011", "category": "生态环保", "title": "广西玉林违法违规采矿破坏生态案", "summary": "企业在生态保护红线内开挖砂石，侵占林地，破坏生态。", "law": "《环境保护法》", "penalty": "责令停止违法行为、生态修复", "source": "生态环境部", "source_url": "https://www.mee.gov.cn/", "publish_date": "2026-03-15"}, {"id": "case_012", "category": "生态环保", "title": "固废法过度包装案", "summary": "粽子礼盒包装空隙率高达64.72%，违反限制商品过度包装的强制性标准。", "law": "《固体废物污染环境防治法》第六十八条", "penalty": "责令下架、整改", "source": "市场监管总局", "source_url": "https://www.samr.gov.cn/", "publish_date": "2026-06-08"}, {"id": "case_013", "category": "生态环保", "title": "混凝土公司在生态红线内开挖案", "summary": "珲春卓鸿公司在生态保护红线内开挖砂石，侵占林地。", "law": "《环境保护法》", "penalty": "责令停止违法行为、生态修复", "source": "生态环境部", "source_url": "https://www.mee.gov.cn/", "publish_date": "2026-02-20"}, {"id": "case_014", "category": "生态环保", "title": "非法排放含重金属废水案", "summary": "某企业将含重金属废水直接排入河道，造成水体污染。", "law": "《水污染防治法》第三十九条", "penalty": "罚款、责令停产整治", "source": "生态环境部", "source_url": "https://www.mee.gov.cn/", "publish_date": "2026-01-15"}, {"id": "case_015", "category": "生态环保", "title": "畜禽养殖污染整改案", "summary": "某养殖场排放污水影响周边环境，被要求限期整改。", "law": "《畜禽规模养殖污染防治条例》", "penalty": "责令限期整改", "source": "农业农村部", "source_url": "https://www.moa.gov.cn/", "publish_date": "2026-07-10"}, {"id": "case_016", "category": "动物保护", "title": "小区流浪猫扰民治理案", "summary": "眉山市某小区住户在楼道内违规养猫，噪音扰民、卫生堪忧。", "law": "《动物防疫法》第三十条", "penalty": "网格员介入、责令清理", "source": "眉山市人民政府", "source_url": "https://www.ms.gov.cn/", "publish_date": "2026-07-08"}, {"id": "case_017", "category": "动物保护", "title": "野生动物致害补偿案", "summary": "河北保定雕鸮钻进鸽笼咬死赛鸽，价值两万多元，补偿申请仍在流程中。", "law": "《野生动物保护法》第十九条", "penalty": "当地政府依法给予补偿", "source": "国家林草局", "source_url": "https://www.forestry.gov.cn/", "publish_date": "2026-09-12"}, {"id": "case_018", "category": "动物保护", "title": "异宠饲养与公共安全案", "summary": "有人饲养外来物种随意放生，威胁本地生态安全。", "law": "《生物安全法》第二十三条", "penalty": "责令改正、罚款", "source": "农业农村部", "source_url": "https://www.moa.gov.cn/", "publish_date": "2026-02-18"}, {"id": "case_019", "category": "动物保护", "title": "流浪猫TNR社区治理案", "summary": "刘阿姨自费喂猫做绝育，社区组织恳谈会后双方加入互助团。", "law": "《动物防疫法》第三十条", "penalty": "协商共治、社区公约", "source": "地方社区实践", "source_url": "https://www.gov.cn/", "publish_date": "2026-08-25"}, {"id": "case_020", "category": "动物保护", "title": "野猪毁坏庄稼补偿案", "summary": "野猪泛滥毁坏庄稼，农户要求补偿，补偿标准和程序待明确。", "law": "《野生动物保护法》第十九条", "penalty": "当地政府给予补偿", "source": "国家林草局", "source_url": "https://www.forestry.gov.cn/", "publish_date": "2026-06-12"}, {"id": "case_021", "category": "动物保护", "title": "流浪犬集中处置案", "summary": "某小区流浪犬数量激增，物业拟集中清理，引发居民争议。", "law": "《动物防疫法》第三十条", "penalty": "街道办组织控制和处置", "source": "地方政府", "source_url": "https://www.gov.cn/", "publish_date": "2026-05-30"}, {"id": "case_022", "category": "动物保护", "title": "猫妈妈红姑社区共建案", "summary": "居民红姑五年花光积蓄救助50余只流浪猫，从矛盾焦点变社区共建模范。", "law": "《动物防疫法》第三十条", "penalty": "社区共建、喵星驿站", "source": "地方社区实践", "source_url": "https://www.gov.cn/", "publish_date": "2026-04-18"}, {"id": "case_023", "category": "产品质量", "title": "不合格润滑油案", "summary": "生产企业销售不符合国家标准的润滑油，危及车辆安全。", "law": "《产品质量法》第二十六条", "penalty": "没收违法所得、罚款", "source": "市场监管总局", "source_url": "https://www.samr.gov.cn/", "publish_date": "2026-06-05"}, {"id": "case_024", "category": "产品质量", "title": "侵犯爱马仕商标专用权案", "summary": "某商家销售假冒爱马仕注册商标的商品，构成商标侵权。", "law": "《商标法》第五十七条", "penalty": "没收侵权商品、罚款", "source": "市场监管总局", "source_url": "https://www.samr.gov.cn/", "publish_date": "2026-05-20"}, {"id": "case_025", "category": "产品质量", "title": "滴露物化女性广告案", "summary": "滴露发布含有物化女性内容的广告，被认定违反广告法。", "law": "《广告法》第九条", "penalty": "责令停止发布、罚款", "source": "市场监管总局", "source_url": "https://www.samr.gov.cn/", "publish_date": "2026-04-10"}, {"id": "case_026", "category": "产品质量", "title": "不合格儿童玩具案", "summary": "某企业生产的小零件易脱落，存在窒息风险。", "law": "《产品质量法》第二十六条", "penalty": "责令召回、罚款", "source": "市场监管总局", "source_url": "https://www.samr.gov.cn/", "publish_date": "2026-03-28"}, {"id": "case_027", "category": "消费纠纷", "title": "电商平台大数据杀熟案", "summary": "平台利用算法对老用户展示更高价格，构成价格歧视。", "law": "《个人信息保护法》第二十四条", "penalty": "责令整改、罚款", "source": "市场监管总局", "source_url": "https://www.samr.gov.cn/", "publish_date": "2026-02-14"}, {"id": "case_028", "category": "消费纠纷", "title": "预付卡跑路案", "summary": "健身房收取预付费后关门跑路，消费者集体维权。", "law": "《消费者权益保护法》第五十三条", "penalty": "退还预付款、行政处罚", "source": "市场监管总局", "source_url": "https://www.samr.gov.cn/", "publish_date": "2026-01-20"}, {"id": "case_029", "category": "生态环保", "title": "碳市场企业未履约案", "summary": "某重点排放单位未按时足额清缴碳排放配额。", "law": "《碳排放权交易管理暂行条例》", "penalty": "责令限期改正、罚款", "source": "生态环境部", "source_url": "https://www.mee.gov.cn/", "publish_date": "2026-09-15"}, {"id": "case_030", "category": "产品质量", "title": "新能源车电池回收黑作坊案", "summary": "退役动力电池流入无资质小作坊，造成环境污染风险。", "law": "《新能源汽车动力蓄电池回收利用管理暂行办法》", "penalty": "联合执法、取缔黑作坊", "source": "工信部", "source_url": "https://www.miit.gov.cn/", "publish_date": "2026-08-08"}, {"category": "消费纠纷", "title": "加油站计量作弊案", "summary": "涉事企业通过非法改装加油机主板、加装作弊软件，在售油过程中短斤少两，违法所得均超过百万元。", "law": "《计量法》第二十六条", "penalty": "没收设备、高额罚没款", "source": "市场监管总局", "source_url": "https://www.samr.gov.cn/", "publish_date": "2026-02-02", "id": "case_031"}, {"category": "消费纠纷", "title": "电子秤作弊系列案", "summary": "厦门市湖里区黄志东家电子产品店销售具有作弊功能的电子秤7台、遥控器98个，销售作弊电子秤货值达13万余元。", "law": "《计量法》第二十七条", "penalty": "移送公安机关、查办关联案件11起", "source": "市场监管总局", "source_url": "https://xinwen.bjd.com.cn/content/s698f1b09e4b0cd719e9da659.html", "publish_date": "2026-02-13", "id": "case_032"}, {"category": "消费纠纷", "title": "水产品店使用作弊电子秤案", "summary": "青岛市北区张先杰水产品商店使用具有作弊功能的电子秤，消费者购买715g水产品实际重量仅675g。", "law": "《计量法》第二十七条", "penalty": "没收不合格电子秤、罚款1万元", "source": "市场监管总局", "source_url": "https://xinwen.bjd.com.cn/content/s698f1b09e4b0cd719e9da659.html", "publish_date": "2026-02-13", "id": "case_033"}, {"category": "消费纠纷", "title": "废品收购店电子秤作弊案", "summary": "托克逊县曼曼废品收购店使用未经强制检定、具有遥控作弊功能的电子秤，误差率分别为25%和30%。", "law": "《计量法》第二十六条", "penalty": "没收涉案电子秤、罚没款1.31万元", "source": "市场监管总局", "source_url": "https://xinwen.bjd.com.cn/content/s698f1b09e4b0cd719e9da659.html", "publish_date": "2026-02-13", "id": "case_034"}, {"category": "消费纠纷", "title": "物业转供电多收价款案", "summary": "成都睿邦物业达州分公司使用不合格电能表，多收取226户商铺转供电价款166.8万元。", "law": "《计量法》《价格法》", "penalty": "清退多收价款166.8万元、罚款9.62万元", "source": "市场监管总局", "source_url": "https://xinwen.bjd.com.cn/content/s698f1b09e4b0cd719e9da659.html", "publish_date": "2026-02-13", "id": "case_035"}, {"category": "消费纠纷", "title": "虚假标注营养成分案", "summary": "重庆楚某食品公司未检测产品营养成分，参考类似产品修改数据后标注在包装上。", "law": "《食品安全法》第七十一条", "penalty": "没收违法所得280元、罚款2500元", "source": "市场监管总局", "source_url": "https://www.samr.gov.cn/zt/pgt/art/2025/art_2e7d8bc180eb4ef587c673771abd4a4c.html", "publish_date": "2025-12-03", "id": "case_036"}, {"category": "消费纠纷", "title": "销售有毒有害保健食品终身禁业案", "summary": "钟某销售的保健食品中检出西地那非和他达拉非成分，被判处有期徒刑并被实施终身禁业。", "law": "《食品安全法》第一百三十五条", "penalty": "终身不得从事食品生产经营管理工作", "source": "市场监管总局", "source_url": "https://www.samr.gov.cn/zt/pgt/art/2025/art_2e7d8bc180eb4ef587c673771abd4a4c.html", "publish_date": "2025-12-03", "id": "case_037"}, {"category": "消费纠纷", "title": "甲醛溶液加工牛腿骨案", "summary": "谭某平使用甲醛溶液加工牛腿骨并销售，检出甲醛含量为910mg/kg。", "law": "《食品安全法》第三十四条", "penalty": "移送公安机关追究刑事责任", "source": "市场监管总局", "source_url": "https://www.samr.gov.cn/zt/pgt/art/2025/art_2e7d8bc180eb4ef587c673771abd4a4c.html", "publish_date": "2025-12-03", "id": "case_038"}, {"category": "消费纠纷", "title": "减肥食品含禁用物质案", "summary": "罗某丹通过小红书、微信销售名为韩国减肥产品的食品，检出比沙可啶、对乙酰氨基酚等禁用物质。", "law": "《食品安全法》第一百二十三条", "penalty": "没收违法所得6510元、罚款49725元", "source": "市场监管总局", "source_url": "https://www.samr.gov.cn/zt/pgt/art/2025/art_2e7d8bc180eb4ef587c673771abd4a4c.html", "publish_date": "2025-12-03", "id": "case_039"}, {"category": "消费纠纷", "title": "销售侵犯注册商标专用权白酒案", "summary": "余某某销售假冒某品牌白酒92瓶，无法说明合法进货来源。", "law": "《商标法》第五十七条", "penalty": "没收92瓶侵权白酒、罚款5万元", "source": "黄冈市市场监管局", "source_url": "http://scjg.hubei.gov.cn/hbdjqqjmgzw/djqqjmgzw_dxal/202511/t20251125_5819983.shtml", "publish_date": "2025-11-25", "id": "case_040"}, {"category": "消费纠纷", "title": "开市客销售超规防腐剂杏干案", "summary": "开市客中国销售的杏干山梨酸及其钾盐不符合食品安全国家标准，复检仍不合格。", "law": "《食品安全法》第一百二十四条", "penalty": "罚款32.99万元", "source": "上海市浦东新区市监局", "source_url": "https://m.sohu.com/a/1086806709_161795", "publish_date": "2026-10-12", "id": "case_041"}, {"category": "消费纠纷", "title": "元宝捏捏乐玩具不合格案", "summary": "宁波酷品汇商贸公司销售的元宝捏捏乐玩具多个项目不符合强制性国家标准。", "law": "《产品质量法》第十三条、第四十九条", "penalty": "罚没款共计9.97万元", "source": "市场监管总局", "source_url": "https://news.cnr.cn/native/gd/kx/20260920/t20260920_527819256.shtml", "publish_date": "2026-09-20", "id": "case_042"}, {"category": "消费纠纷", "title": "女童卫衣pH值不合格案", "summary": "上海云兮商贸公司生产的女童卫衣pH值项目不符合强制性国家标准要求。", "law": "《产品质量法》第十三条、第四十九条", "penalty": "罚没款共计1.08万元", "source": "市场监管总局", "source_url": "https://news.cnr.cn/native/gd/kx/20260920/t20260920_527819256.shtml", "publish_date": "2026-09-20", "id": "case_043"}, {"category": "消费纠纷", "title": "学生服装以次充好案", "summary": "桂平市木乐镇经纬服装厂生产的学生服装被判定不合格，以次充好出厂销售200套。", "law": "《产品质量法》第三十二条、第五十条", "penalty": "罚没款共计1.14万元", "source": "市场监管总局", "source_url": "https://news.cnr.cn/native/gd/kx/20260920/t20260920_527819256.shtml", "publish_date": "2026-09-20", "id": "case_044"}, {"category": "消费纠纷", "title": "不合格童鞋电商销售案", "summary": "蚌埠夏浮商贸公司从广东揭阳采购童鞋280双通过电商平台全部售出，经检验为不合格产品。", "law": "《产品质量法》第十三条", "penalty": "责令停止销售、行政处罚", "source": "市场监管总局", "source_url": "https://news.cnr.cn/native/gd/kx/20260920/t20260920_527819256.shtml", "publish_date": "2026-09-20", "id": "case_045"}, {"category": "消费纠纷", "title": "老年人医美纠纷案", "summary": "63岁陈女士在广州某医美门诊部接受眼袋矫正术后效果未达预期，眼睛常流泪刺痛。", "law": "《消费者权益保护法》第二十条", "penalty": "建议司法途径维权", "source": "广州市消委会", "source_url": "https://www.guangzhou315.com/html/web/anlifenxi/1985273005708611585.html", "publish_date": "2025-11-03", "id": "case_046"}, {"category": "消费纠纷", "title": "食用农产品质量安全案", "summary": "某食品公司生产的酸辣粉铝残留量超标全量售出，且无法提供进销货台账。", "law": "《食品安全法》第三十四条", "penalty": "没收违法所得、罚款5万元", "source": "河南省市场监管局", "source_url": "https://www.samr.gov.cn/", "publish_date": "2025-09-11", "id": "case_047"}, {"category": "消费纠纷", "title": "14万枚过期粽子案", "summary": "W公司停产半年后仓库中存有过期粽子14万枚，检察机关介入监督处置。", "law": "《食品安全法》第三十四条", "penalty": "责令及时处置、检察监督", "source": "山西省临汾市尧都区检察院", "source_url": "https://www.linfenyd.jcy.gov.cn/", "publish_date": "2026-10-12", "id": "case_048"}, {"category": "消费纠纷", "title": "芝麻油掺杂掺假案", "summary": "重庆五鼎坊食品公司生产的纯芝麻油中掺有廉价的大豆油和棉籽油，调和油违规添加香精。", "law": "《食品安全法》第三十四条", "penalty": "行政处罚", "source": "市场监管总局", "source_url": "https://mrdx.cn/", "publish_date": "2025-11-26", "id": "case_049"}, {"category": "消费纠纷", "title": "餐饮具清洗消毒不合格案", "summary": "团风县某公司食堂使用的餐盘经复查抽样仍不符合食品安全国家标准。", "law": "《食品安全法》第一百二十六条", "penalty": "罚款1万元", "source": "黄冈市市场监管局", "source_url": "http://scjg.hubei.gov.cn/hbdjqqjmgzw/djqqjmgzw_dxal/202511/t20251125_5819983.shtml", "publish_date": "2025-11-25", "id": "case_050"}, {"category": "消费纠纷", "title": "卤菜超限量使用添加剂案", "summary": "浠水县某卤菜专卖店自制卤猪耳中山梨酸及其钾盐含量超过国家标准。", "law": "《食品安全法》第一百二十四条", "penalty": "没收违法所得110.4元、罚款1万元", "source": "黄冈市市场监管局", "source_url": "http://scjg.hubei.gov.cn/hbdjqqjmgzw/djqqjmgzw_dxal/202511/t20251125_5819983.shtml", "publish_date": "2025-11-25", "id": "case_051"}, {"category": "消费纠纷", "title": "超市使用过期食品原料案", "summary": "黄梅县某超市卤菜操作间待使用的多种食品原料均超过保质期。", "law": "《食品安全法》第一百二十四条", "penalty": "没收过期原料、罚款2万元", "source": "黄冈市市场监管局", "source_url": "http://scjg.hubei.gov.cn/hbdjqqjmgzw/djqqjmgzw_dxal/202511/t20251125_5819983.shtml", "publish_date": "2025-11-25", "id": "case_052"}, {"category": "生态环保", "title": "海水养殖尾水污染自然保护区案", "summary": "惠东县丰茂花草种植公司养殖尾水排入大亚湾保护区核心区，在海面形成深色污染带。", "law": "《海洋环境保护法》", "penalty": "责令整改、行政处罚", "source": "生态环境部", "source_url": "https://m.gmw.cn/2026-05/26/content_1304471297.htm", "publish_date": "2026-05-26", "id": "case_053"}, {"category": "生态环保", "title": "红树林保护不力案", "summary": "惠东红树林受损面积约6亩，死亡株数约800棵，林业局一直未开展原因排查。", "law": "《环境保护法》", "penalty": "责令整改、生态修复", "source": "生态环境部", "source_url": "https://m.gmw.cn/2026-05/26/content_1304471297.htm", "publish_date": "2026-05-26", "id": "case_054"}, {"category": "生态环保", "title": "入海河流污水直排案", "summary": "惠州市惠东县大坑河、咸溪仔河污水管网建设不完善，部分生活污水直排，河道黑臭明显。", "law": "《水污染防治法》", "penalty": "责令整改", "source": "生态环境部", "source_url": "https://m.gmw.cn/2026-05/26/content_1304471297.htm", "publish_date": "2026-05-26", "id": "case_055"}, {"category": "生态环保", "title": "钢铁项目违规新增产能案", "summary": "营口市敬业中板公司未落实产能置换政策，违规新增产能，采用临时停产应对督察。", "law": "《环境影响评价法》", "penalty": "责令整改", "source": "生态环境部", "source_url": "https://eco.cctv.cn/2026/05/20/ARTIQCpk6tERb3MJVnhhDx5X260520.shtml", "publish_date": "2026-05-20", "id": "case_056"}, {"category": "生态环保", "title": "炭素行业大气污染案", "summary": "抚顺旺源炭素公司大量黄色烟气无组织排放，抚顺隆腾新材料公司部分烟气从破损缺口直排。", "law": "《大气污染防治法》", "penalty": "责令整改", "source": "生态环境部", "source_url": "https://eco.cctv.cn/2026/05/20/ARTIQCpk6tERb3MJVnhhDx5X260520.shtml", "publish_date": "2026-05-20", "id": "case_057"}, {"category": "生态环保", "title": "违规拍卖国家森林公园砂石开采权案", "summary": "汪清县政府违规拍卖吉林满天星国家森林公园内水库库区砂石开采权。", "law": "《森林法》", "penalty": "责令整改", "source": "生态环境部", "source_url": "https://eco.cctv.cn/2026/05/20/ARTIQCpk6tERb3MJVnhhDx5X260520.shtml", "publish_date": "2026-05-20", "id": "case_058"}, {"category": "生态环保", "title": "违规建设冰雪乐园侵占保护区案", "summary": "火山大峡谷旅游文化发展公司违规在吉林园池湿地国家级自然保护区建设冰雪乐园项目。", "law": "《自然保护区条例》", "penalty": "责令整改", "source": "生态环境部", "source_url": "https://eco.cctv.cn/2026/05/20/ARTIQCpk6tERb3MJVnhhDx5X260520.shtml", "publish_date": "2026-05-20", "id": "case_059"}, {"category": "生态环保", "title": "湿地面积持续减少案", "summary": "齐齐哈尔市2025年湿地面积较2020年减少8000公顷，其中2700多亩系人为破坏。", "law": "《湿地保护法》", "penalty": "责令整改", "source": "生态环境部", "source_url": "https://eco.cctv.cn/2026/05/20/ARTIQCpk6tERb3MJVnhhDx5X260520.shtml", "publish_date": "2026-05-20", "id": "case_060"}, {"category": "生态环保", "title": "削山造地违法采矿案", "summary": "兴业县削山造地违法采矿出售，截至督察进驻已违规外售矿石100万吨。", "law": "《矿产资源法》", "penalty": "责令停止违法行为", "source": "生态环境部", "source_url": "https://eco.cctv.cn/2026/05/20/ARTIQCpk6tERb3MJVnhhDx5X260520.shtml", "publish_date": "2026-05-20", "id": "case_061"}, {"category": "生态环保", "title": "以生态修复名义违法采矿案", "summary": "容县远利建筑材料公司、陆川县虹源防水材料公司以生态修复名义违法采矿。", "law": "《矿产资源法》", "penalty": "责令停止违法行为、生态修复", "source": "生态环境部", "source_url": "https://eco.cctv.cn/2026/05/20/ARTIQCpk6tERb3MJVnhhDx5X260520.shtml", "publish_date": "2026-05-20", "id": "case_062"}, {"category": "生态环保", "title": "以农业项目为名违法采矿案", "summary": "北流市腾隆公司、炳辉农业公司养殖项目违法采矿，占用林地，水土流失严重。", "law": "《矿产资源法》", "penalty": "责令停止违法行为", "source": "生态环境部", "source_url": "https://eco.cctv.cn/2026/05/20/ARTIQCpk6tERb3MJVnhhDx5X260520.shtml", "publish_date": "2026-05-20", "id": "case_063"}, {"category": "生态环保", "title": "私设管道偷排养殖废水案", "summary": "钦州市钦南区一家养殖场私设管道，偷排清淤废水进入大灶江。", "law": "《水污染防治法》", "penalty": "责令整改、行政处罚", "source": "生态环境部", "source_url": "https://k.sina.cn/", "publish_date": "2026-05-26", "id": "case_064"}, {"category": "动物保护", "title": "非法猎捕画眉鸟案", "summary": "陈某铭通过架设捕鸟网及播放画眉鸟叫声诱捕，非法猎捕并购买800余只国家二级保护野生动物画眉鸟。", "law": "《刑法》第三百四十一条", "penalty": "有期徒刑十年一个月、罚金二十万元", "source": "最高人民法院", "source_url": "http://www.scio.gov.cn/xwfb/gfgjxwfb/gfgjfbh/zgf/202511/t20251118_939452.html", "publish_date": "2025-11-14", "id": "case_065"}, {"category": "动物保护", "title": "粘网诱鸟器猎捕野生鸟类案", "summary": "董某君使用粘网和诱鸟器大量猎捕野生鸟类，公安机关查获880余只鸟类死体和活体。", "law": "《刑法》第三百四十一条", "penalty": "以危害珍贵、濒危野生动物罪判处有期徒刑", "source": "最高人民法院", "source_url": "http://www.scio.gov.cn/xwfb/gfgjxwfb/gfgjfbh/zgf/202511/t20251118_939452.html", "publish_date": "2025-11-14", "id": "case_066"}, {"category": "动物保护", "title": "非法狩猎案", "summary": "张某、姜某文、章某重非法狩猎野生鸟类，被依法追究刑事责任。", "law": "《刑法》第三百四十一条", "penalty": "依法追究刑事责任", "source": "最高人民法院", "source_url": "http://www.scio.gov.cn/xwfb/gfgjxwfb/gfgjfbh/zgf/202511/t20251118_939452.html", "publish_date": "2025-11-14", "id": "case_067"}, {"category": "动物保护", "title": "救助伤病灰鹤案", "summary": "川渝两地联手救助伤病灰鹤吉吉，经检查确认是国家二级保护野生动物，骨瘦如柴、多处伤口。", "law": "《野生动物保护法》", "penalty": "救助放归", "source": "国家林草局", "source_url": "https://www.forestry.gov.cn/", "publish_date": "2026-10-12", "id": "case_068"}, {"category": "动物保护", "title": "野生东北虎六虎同框记录案", "summary": "2025年11月6日我国首次记录到野生东北虎六虎同框的完整罕见画面，刷新国内野生虎单次监测纪录。", "law": "《野生动物保护法》", "penalty": "持续监测保护", "source": "国家林草局", "source_url": "https://www.forestry.gov.cn/", "publish_date": "2026-10-12", "id": "case_069"}, {"category": "动物保护", "title": "大熊猫国家公园协议保护模式案", "summary": "平武关坝村依靠协议保护模式，中蜂蜂蜜、冷水鱼产业蓬勃发展，案例入选联合国生物多样性100+全球典型案例。", "law": "《野生动物保护法》", "penalty": "协议保护、社区共建", "source": "国家林草局", "source_url": "https://www.forestry.gov.cn/", "publish_date": "2026-10-12", "id": "case_070"}, {"category": "产品质量", "title": "挤塑聚苯板不合格案", "summary": "常熟市沙家浜镇三鑫保温材料厂生产的挤塑聚苯板导热系数和燃烧性能项目不符合国家标准。", "law": "《产品质量法》第十三条、第四十九条", "penalty": "没收不合格产品、罚款10万元", "source": "市场监管总局", "source_url": "https://www.dhlc.gov.cn/scjgj/Web/_F0_0_6QANADJ5B773D517888649A290.htm", "publish_date": "2026-09-18", "id": "case_071"}, {"category": "产品质量", "title": "不合格电蚊拍案", "summary": "揭阳市凯丽雅电器有限公司生产质量不合格的电蚊拍，存在安全隐患。", "law": "《产品质量法》第四十九条", "penalty": "行政处罚", "source": "市场监管总局", "source_url": "https://www.dhlc.gov.cn/scjgj/Web/_F0_0_6QANADJ5B773D517888649A290.htm", "publish_date": "2026-09-18", "id": "case_072"}, {"category": "产品质量", "title": "伪造厂名农用地膜案", "summary": "阳谷县安乐镇明新土产杂品门市部销售伪造厂名农用地膜及未落实产品质量安全主体责任。", "law": "《产品质量法》第三十七条", "penalty": "没收违法所得、罚款", "source": "山东省市场监管局", "source_url": "https://amr.shandong.gov.cn/", "publish_date": "2026-06-17", "id": "case_073"}, {"category": "产品质量", "title": "销售不合格足金套链案", "summary": "香河县某商户销售以不合格产品冒充合格产品且冒用他人厂名厂址的足金套链。", "law": "《产品质量法》第三十七条、第三十九条、第五十条", "penalty": "没收不合格足金套链、罚款5702.4元", "source": "香河县市场监管局", "source_url": "http://27.128.171.65/", "publish_date": "2026-10-12", "id": "case_074"}, {"category": "产品质量", "title": "童装店销售不合格童装案", "summary": "宝鸡市某童装店销售不合格童装，被依法查处。", "law": "《产品质量法》第四十九条", "penalty": "行政处罚", "source": "陕西省市场监管局", "source_url": "https://www.cqn.com.cn/", "publish_date": "2026-10-12", "id": "case_075"}, {"category": "产品质量", "title": "职业高中发布违法广告案", "summary": "西安市某职业高中发布违法广告，被市场监管部门查处。", "law": "《广告法》", "penalty": "行政处罚", "source": "陕西省市场监管局", "source_url": "https://www.cqn.com.cn/", "publish_date": "2026-10-12", "id": "case_076"}, {"category": "产品质量", "title": "销售伪造厂名厂址商品案", "summary": "商洛市某公司镇安分公司发布虚假广告，被市场监管部门查处。", "law": "《广告法》", "penalty": "行政处罚", "source": "陕西省市场监管局", "source_url": "https://www.cqn.com.cn/", "publish_date": "2026-10-12", "id": "case_077"}, {"category": "食品安全", "title": "凉茶非法添加麻黄系列案", "summary": "海南省东方市凉茶店为增强疗效非法添加麻黄，被综合行政执法局查处。", "law": "《食品安全法》第三十四条", "penalty": "行政处罚", "source": "市场监管总局", "source_url": "https://www.samr.gov.cn/", "publish_date": "2026-02-02", "id": "case_078"}, {"category": "食品安全", "title": "不合格学生军训服案", "summary": "江苏盐城亭湖区市场监管局查处不合格学生军训服销售案，直指特定领域侵害消费者权益。", "law": "《产品质量法》第四十九条", "penalty": "行政处罚", "source": "市场监管总局", "source_url": "https://www.samr.gov.cn/", "publish_date": "2026-02-02", "id": "case_079"}, {"category": "食品安全", "title": "出具虚假检验检测报告案", "summary": "新疆哈密市某公司出具虚假检验检测报告，伪造检测数据，严重违背检测行业基本准则。", "law": "《检验检测机构监督管理办法》", "penalty": "行政处罚", "source": "市场监管总局", "source_url": "https://www.samr.gov.cn/", "publish_date": "2026-02-02", "id": "case_080"}, {"category": "食品安全", "title": "酸辣粉铝残留超标案", "summary": "鹤壁市某食品公司生产的226件酸辣粉因铝残留量超标全量售出，无法提供进销货台账。", "law": "《食品安全法》第三十四条", "penalty": "没收违法所得0.4万元、罚款5万元", "source": "河南省市场监管局", "source_url": "https://www.samr.gov.cn/", "publish_date": "2025-09-11", "id": "case_081"}, {"category": "食品安全", "title": "粽子过期处置案", "summary": "安居区市场监管局在日常检查中发现W公司仓库中存有过期粽子14万枚，当场责令处置。", "law": "《食品安全法》第三十四条", "penalty": "责令及时处置", "source": "山西省临汾市尧都区检察院", "source_url": "https://www.linfenyd.jcy.gov.cn/", "publish_date": "2026-10-12", "id": "case_082"}, {"category": "劳动争议", "title": "工伤职工停工留薪期争议案", "summary": "彭某仅凭医院诊断证明书主张延长停工留薪期，拒绝配合劳动能力鉴定委员会现场鉴定。", "law": "《社会保险法》第三十九条", "penalty": "驳回仲裁请求", "source": "人社部、最高人民法院", "source_url": "http://chinatrial.net.cn/news/32434.html", "publish_date": "2025-04-16", "id": "case_083"}, {"category": "劳动争议", "title": "孕期女职工被调岗降薪案", "summary": "用人单位因女职工怀孕通过变相调整工作岗位降低其工资及福利待遇。", "law": "《女职工劳动保护特别规定》", "penalty": "明确用人单位违法", "source": "人社部、最高人民法院", "source_url": "http://chinatrial.net.cn/news/32434.html", "publish_date": "2025-04-16", "id": "case_084"}, {"category": "劳动争议", "title": "病亡职工遗属抚恤金案", "summary": "病亡职工遗属以未依法缴纳社会保险费为由要求用人单位补足抚恤金差额。", "law": "《社会保险法》", "penalty": "用人单位应补足抚恤金差额", "source": "人社部、最高人民法院", "source_url": "http://chinatrial.net.cn/news/32434.html", "publish_date": "2025-04-16", "id": "case_085"}, {"category": "劳动争议", "title": "竞业限制协议主体不适格案", "summary": "主体不适格的竞业限制协议不具有约束力，用人单位不能据此限制劳动者就业。", "law": "《劳动合同法》第二十四条", "penalty": "竞业限制协议无效", "source": "人社部、最高人民法院", "source_url": "http://chinatrial.net.cn/news/32434.html", "publish_date": "2025-04-16", "id": "case_086"}, {"category": "知识产权", "title": "华美牙科商标无效宣告案", "summary": "成都华美牙科与重庆华美整形美容医院就华美牙科商标权无效宣告产生行政纠纷。", "law": "《商标法》第三十二条", "penalty": "检察机关抗诉", "source": "最高人民检察院", "source_url": "https://www.12309.gov.cn/sppWeb/weChat/ajWxDetails?id=spp726215", "publish_date": "2026-04-22", "id": "case_087"}, {"category": "知识产权", "title": "著作权权属侵权虚假诉讼案", "summary": "付某某等4人著作权权属、侵权纠纷系列虚假诉讼监督案。", "law": "《著作权法》", "penalty": "检察监督", "source": "最高人民检察院", "source_url": "https://www.12309.gov.cn/sppWeb/weChat/ajWxDetails?id=spp726215", "publish_date": "2026-04-22", "id": "case_088"}, {"category": "知识产权", "title": "侵犯商业秘密案", "summary": "王某甲、王某乙等3人侵犯商业秘密，被依法追究刑事责任。", "law": "《反不正当竞争法》第九条", "penalty": "刑事追责", "source": "最高人民检察院", "source_url": "https://www.12309.gov.cn/sppWeb/weChat/ajWxDetails?id=spp726215", "publish_date": "2026-04-22", "id": "case_089"}, {"category": "知识产权", "title": "为境外非法提供商业秘密案", "summary": "田某为境外非法提供商业秘密，被依法追究刑事责任。", "law": "《刑法》第二百一十九条", "penalty": "刑事追责", "source": "最高人民检察院", "source_url": "https://www.12309.gov.cn/sppWeb/weChat/ajWxDetails?id=spp726215", "publish_date": "2026-04-22", "id": "case_090"}, {"category": "知识产权", "title": "侵犯著作权案", "summary": "众某绿能科技有限公司、王某某等4人侵犯著作权，被依法追究刑事责任。", "law": "《著作权法》", "penalty": "刑事追责", "source": "最高人民检察院", "source_url": "https://www.12309.gov.cn/sppWeb/weChat/ajWxDetails?id=spp726215", "publish_date": "2026-04-22", "id": "case_091"}, {"category": "知识产权", "title": "销售假冒注册商标化妆品案", "summary": "李某销售侵犯20余个品牌注册商标专用权的化妆品，被市场监管部门查处。", "law": "《商标法》第五十七条", "penalty": "行政处罚", "source": "市场监管总局", "source_url": "https://www.jcrb.com/", "publish_date": "2026-09-11", "id": "case_092"}, {"category": "知识产权", "title": "伪造变造专利证书案", "summary": "曹某华伪造、变造专利证书及销售假冒专利产品，被杭州市上城区市场监管局查处。", "law": "《专利法》第六十三条", "penalty": "行政处罚", "source": "市场监管总局", "source_url": "https://www.jcrb.com/", "publish_date": "2026-09-11", "id": "case_093"}, {"category": "网络治理", "title": "企业网页篡改案", "summary": "上海某电子公司长期忽视门户网站后台管理员账号弱口令问题，网站源文件被植入恶意代码。", "law": "《网络安全法》", "penalty": "责令改正、罚款", "source": "国家网信办", "source_url": "http://www.jldunhua.jcy.gov.cn/ajjj/202610/t20261009_7915478.shtml", "publish_date": "2026-10-09", "id": "case_094"}, {"category": "网络治理", "title": "应用程序设置恶意程序案", "summary": "北京某网络科技公司员工离职前向应用程序植入恶意程序以获取推广费用。", "law": "《网络安全法》", "penalty": "责令改正、罚款、移送公安", "source": "国家网信办", "source_url": "http://www.jldunhua.jcy.gov.cn/ajjj/202610/t20261009_7915478.shtml", "publish_date": "2026-10-09", "id": "case_095"}, {"category": "网络治理", "title": "企业数据被窃取案", "summary": "安徽某数据产业公司使用存在未授权访问漏洞的ES开源版本，导致2400余份内部文件被窃取。", "law": "《数据安全法》", "penalty": "警告、罚款", "source": "国家网信办", "source_url": "http://www.jldunhua.jcy.gov.cn/ajjj/202610/t20261009_7915478.shtml", "publish_date": "2026-10-09", "id": "case_096"}, {"category": "网络治理", "title": "医院数据泄露风险案", "summary": "河南某医院体检系统存在弱口令漏洞，网络系统终端存在700个安全漏洞。", "law": "《数据安全法》《个人信息保护法》", "penalty": "警告、罚款、通报卫健部门", "source": "国家网信办", "source_url": "http://www.jldunhua.jcy.gov.cn/ajjj/202610/t20261009_7915478.shtml", "publish_date": "2026-10-09", "id": "case_097"}, {"category": "网络治理", "title": "硬件产品个人信息泄露风险案", "summary": "广东某软件技术公司开发的硬件产品存在未授权访问漏洞，可查看车辆状态信息。", "law": "《个人信息保护法》", "penalty": "责令改正", "source": "国家网信办", "source_url": "http://www.jldunhua.jcy.gov.cn/ajjj/202610/t20261009_7915478.shtml", "publish_date": "2026-10-09", "id": "case_098"}, {"category": "网络治理", "title": "借AI生成传播数字泔水案", "summary": "微博账号心跳存档、小红书账号匡少见等宣扬不良价值观，恶意挑动性别对立。", "law": "《网络信息内容生态治理规定》", "penalty": "依法依约处置", "source": "中央网信办", "source_url": "https://nx.wenming.cn/", "publish_date": "2026-03-11", "id": "case_099"}, {"category": "网络治理", "title": "诱导未成年人参与陪玩案", "summary": "东芜派单-CC阿洛、留恋等账号发布诱导未成年人参与陪玩的内容。", "law": "《未成年人保护法》", "penalty": "依法处置", "source": "中央网信办", "source_url": "https://m.gmw.cn/", "publish_date": "2026-03-27", "id": "case_100"}, {"category": "网络治理", "title": "AI魔改歌曲动画案", "summary": "部分账号使用AI技术魔改歌曲、动画，涉及未成年人不良内容。", "law": "《网络信息内容生态治理规定》", "penalty": "依法处置", "source": "中央网信办", "source_url": "https://m.gmw.cn/", "publish_date": "2026-03-27", "id": "case_101"}, {"category": "医疗美容", "title": "老年人医美术后效果纠纷案", "summary": "63岁陈女士在广州某医美门诊部接受眼袋矫正术后出现颧骨充血肿胀、额头外突等问题，效果未达预期。", "law": "《消费者权益保护法》第二十条", "penalty": "建议司法途径维权", "source": "广州市消委会", "source_url": "https://www.guangzhou315.com/html/web/anlifenxi/1985273005708611585.html", "publish_date": "2025-11-03", "id": "case_102"}, {"category": "医疗美容", "title": "医美服务与约定不符案", "summary": "东莞法院审理医美服务与约定不符案件，判决全额退款并三倍赔偿。", "law": "《消费者权益保护法》第五十五条", "penalty": "全额退款并三倍赔偿", "source": "东莞市第二人民法院", "source_url": "https://defy.dg.gov.cn/", "publish_date": "2025-11-23", "id": "case_103"}, {"category": "医疗美容", "title": "子宫养护后感染炎症案", "summary": "消费者接受子宫养护服务后感染炎症，法院认定存在因果关系并判决赔偿。", "law": "《民法典》第一千二百一十八条", "penalty": "判决赔偿", "source": "东莞市第二人民法院", "source_url": "https://defy.dg.gov.cn/", "publish_date": "2025-11-23", "id": "case_104"}, {"category": "医疗美容", "title": "六旬老人8个月医美消费370万案", "summary": "雷女士的儿媳带婆婆前往杭州两家医疗美容机构消费，累计金额近370万元。", "law": "《消费者权益保护法》", "penalty": "家属维权", "source": "中国新闻网", "source_url": "https://www.chinanews.com/", "publish_date": "2025-10-01", "id": "case_105"}, {"category": "医疗美容", "title": "医美机构诱导顾客网贷案", "summary": "西安未央悦她婕熹卡医疗美容门诊部诱导顾客办理分期、刷信用卡、网络贷款支付医美费用。", "law": "《消费者权益保护法》", "penalty": "消费者投诉维权", "source": "西部网", "source_url": "https://rexian.cnwest.com/", "publish_date": "2025-11-05", "id": "case_106"}, {"category": "消费纠纷", "title": "白酒经营场所暗格藏酒案", "summary": "武汉东湖新技术开发区市场监管局在一酒行经营场所墙体后暗格中发现11个品种中高端白酒309瓶。", "law": "《商标法》第五十七条", "penalty": "现场查扣", "source": "湖北省市场监管局", "source_url": "https://www.samr.gov.cn/", "publish_date": "2026-07-14", "id": "case_107"}, {"category": "消费纠纷", "title": "电子秤作弊行刑衔接案", "summary": "厦门市市场监管局深挖上下游，依法查办关联案件11起，涉及农贸市场经营主体5家。", "law": "《计量法》第二十七条", "penalty": "移送公安机关、查办关联案件11起", "source": "市场监管总局", "source_url": "https://xinwen.bjd.com.cn/content/s698f1b09e4b0cd719e9da659.html", "publish_date": "2026-02-13", "id": "case_108"}, {"category": "消费纠纷", "title": "转供电价格违法案", "summary": "达州市市场监管局指导当事人清退多收价款166.8万元、更换电能表94只。", "law": "《价格法》", "penalty": "清退多收价款166.8万元、罚款9.62万元", "source": "市场监管总局", "source_url": "https://xinwen.bjd.com.cn/content/s698f1b09e4b0cd719e9da659.html", "publish_date": "2026-02-13", "id": "case_109"}, {"category": "消费纠纷", "title": "假冒伪劣商品集中销毁案", "summary": "广西防城港市港口区市场监管局开展假冒伪劣商品集中销毁行动。", "law": "《产品质量法》", "penalty": "集中销毁", "source": "市场监管总局", "source_url": "https://www.samr.gov.cn/", "publish_date": "2026-05-25", "id": "case_110"}, {"category": "消费纠纷", "title": "春雷行动2026典型案例案", "summary": "四川公布春雷行动2026第三批典型案例，涉及多个消费领域违法行为。", "law": "《消费者权益保护法》", "penalty": "行政处罚", "source": "四川省市场监管局", "source_url": "https://www.samr.gov.cn/", "publish_date": "2026-05-20", "id": "case_111"}, {"category": "生态环保", "title": "违规建设钢铁项目案", "summary": "辽宁省抚顺、营口两市违规建设钢铁项目、违规新增落后产能。", "law": "《环境影响评价法》", "penalty": "责令整改", "source": "生态环境部", "source_url": "https://cpc.people.com.cn/", "publish_date": "2026-05-20", "id": "case_112"}, {"category": "生态环保", "title": "违规侵占湿地保护区案", "summary": "讷谟尔河湿地省级自然保护区内部分湿地被截断水源，非法排干湿地。", "law": "《湿地保护法》", "penalty": "责令整改", "source": "生态环境部", "source_url": "https://eco.cctv.cn/2026/05/20/ARTIQCpk6tERb3MJVnhhDx5X260520.shtml", "publish_date": "2026-05-20", "id": "case_113"}, {"category": "生态环保", "title": "扎龙保护区违规建养殖场案", "summary": "扎龙国家级自然保护区核心保护区内违规建规模化养殖场，露天堆放牛粪污染严重。", "law": "《自然保护区条例》", "penalty": "责令整改", "source": "生态环境部", "source_url": "https://eco.cctv.cn/2026/05/20/ARTIQCpk6tERb3MJVnhhDx5X260520.shtml", "publish_date": "2026-05-20", "id": "case_114"}, {"category": "生态环保", "title": "农业项目为名违法采矿案", "summary": "北流市以建设多个农业项目为名行违法采矿卖矿之实。", "law": "《矿产资源法》", "penalty": "责令停止违法行为", "source": "生态环境部", "source_url": "https://eco.cctv.cn/2026/05/20/ARTIQCpk6tERb3MJVnhhDx5X260520.shtml", "publish_date": "2026-05-20", "id": "case_115"}, {"category": "动物保护", "title": "危害珍贵濒危野生动物案", "summary": "陈某范等七人危害珍贵、濒危野生动物、非法狩猎、掩饰隐瞒犯罪所得。", "law": "《刑法》第三百四十一条", "penalty": "依法追究刑事责任", "source": "最高人民法院", "source_url": "http://www.scio.gov.cn/xwfb/gfgjxwfb/gfgjfbh/zgf/202511/t20251118_939452.html", "publish_date": "2025-11-14", "id": "case_116"}, {"category": "动物保护", "title": "非法狩猎野生鸟类案", "summary": "张某、姜某文、章某重非法狩猎野生鸟类，被依法追究刑事责任。", "law": "《刑法》第三百四十一条", "penalty": "依法追究刑事责任", "source": "最高人民法院", "source_url": "http://www.scio.gov.cn/xwfb/gfgjxwfb/gfgjfbh/zgf/202511/t20251118_939452.html", "publish_date": "2025-11-14", "id": "case_117"}], "laws": [{"name": "刑法", "article": "第二百六十六条", "text": "诈骗公私财物，数额较大的，处三年以下有期徒刑、拘役或者管制，并处或者单处罚金。"}, {"name": "刑法", "article": "第二百七十四条", "text": "敲诈勒索公私财物，数额较大或者多次敲诈勒索的，处三年以下有期徒刑、拘役或者管制，并处或者单处罚金。"}, {"name": "消费者权益保护法", "article": "第二十四条", "text": "经营者提供的商品或者服务不符合质量要求的，消费者可以依照国家规定、当事人约定退货，或者要求经营者履行更换、修理等义务。"}, {"name": "消费者权益保护法", "article": "第五十五条", "text": "经营者提供商品或者服务有欺诈行为的，应当按照消费者的要求增加赔偿其受到的损失，增加赔偿的金额为消费者购买商品的价款或者接受服务的费用的三倍。"}, {"name": "食品安全法", "article": "第三十四条", "text": "禁止生产经营下列食品、食品添加剂、食品相关产品：……（十）标注虚假生产日期、保质期或者超过保质期的食品、食品添加剂。"}, {"name": "大气污染防治法", "article": "第八十一条", "text": "排放油烟的餐饮服务业经营者应当安装油烟净化设施并保持正常使用，或者采取其他油烟净化措施，使油烟达标排放，并防止对附近居民的正常生活环境造成污染。"}, {"name": "动物防疫法", "article": "第三十条", "text": "街道办事处、乡级人民政府应当组织协调居民委员会、村民委员会，做好本辖区流浪犬、猫的控制和处置，防止疫病传播。"}, {"name": "野生动物保护法", "article": "第十九条", "text": "有关地方人民政府应当采取措施，预防、控制野生动物可能造成的危害，保障人畜安全和农业、林业生产。"}, {"name": "产品质量法", "article": "第四十九条", "text": "生产、销售不符合保障人体健康和人身、财产安全的国家标准、行业标准的产品的，责令停止生产、销售，没收违法生产、销售的产品，并处违法生产、销售产品货值金额等值以上三倍以下的罚款。"}, {"name": "劳动合同法", "article": "第二十四条", "text": "竞业限制的人员限于用人单位的高级管理人员、高级技术人员和其他负有保密义务的人员。"}, {"name": "广告法", "article": "第二十八条", "text": "广告以虚假或者引人误解的内容欺骗、误导消费者的，构成虚假广告。广告有下列情形之一的，为虚假广告：（一）商品或者服务不存在的；（二）商品的性能、功能、产地、用途、质量、规格、成分、价格、生产者、有效期限、销售状况、曾获荣誉等信息，或者服务的内容、提供者、形式、质量、价格、销售状况、曾获荣誉等信息，以及与商品或者服务有关的允诺等信息与实际情况不符，对购买行为有实质性影响的；（三）使用虚构、伪造或者无法验证的科研成果、统计资料、调查结果、文摘、引用语等信息作证明材料的；（四）虚构使用商品或者接受服务的效果的；（五）以虚假或者引人误解的内容欺骗、误导消费者的其他情形。"}, {"name": "产品质量法", "article": "第十三条", "text": "可能危及人体健康和人身、财产安全的工业产品，必须符合保障人体健康和人身、财产安全的国家标准、行业标准；未制定国家标准、行业标准的，必须符合保障人体健康和人身、财产安全的合理要求。"}, {"name": "商标法", "article": "第五十七条", "text": "有下列行为之一的，均属侵犯注册商标专用权：（一）未经商标注册人的许可，在同一种商品上使用与其注册商标相同的商标的；（二）未经商标注册人的许可，在同一种商品上使用与其注册商标近似的商标，或者在类似商品上使用与其注册商标相同或者近似的商标，容易导致混淆的；（三）销售侵犯注册商标专用权的商品的；（四）伪造、擅自制造他人注册商标标识或者销售伪造、擅自制造的注册商标标识的；（五）未经商标注册人同意，更换其注册商标并将该更换商标的商品又投入市场的；（六）故意为侵犯他人注册商标专用权行为提供便利条件，帮助他人实施侵犯注册商标专用权行为的；（七）给他人的注册商标专用权造成其他损害的。"}, {"name": "刑法", "article": "第三百四十一条", "text": "非法猎捕、杀害国家重点保护的珍贵、濒危野生动物的，或者非法收购、运输、出售国家重点保护的珍贵、濒危野生动物及其制品的，处五年以下有期徒刑或者拘役，并处罚金；情节严重的，处五年以上十年以下有期徒刑，并处罚金；情节特别严重的，处十年以上有期徒刑，并处罚金或者没收财产。违反狩猎法规，在禁猎区、禁猎期或者使用禁用的工具、方法进行狩猎，破坏野生动物资源，情节严重的，处三年以下有期徒刑、拘役、管制或者罚金。"}, {"name": "食品安全法", "article": "第一百四十八条", "text": "消费者因不符合食品安全标准的食品受到损害的，可以向经营者要求赔偿损失，也可以向生产者要求赔偿损失。接到消费者赔偿要求的生产经营者，应当实行首负责任制，先行赔付，不得推诿；属于生产者责任的，经营者赔偿后有权向生产者追偿；属于经营者责任的，生产者赔偿后有权向经营者追偿。生产不符合食品安全标准的食品或者经营明知是不符合食品安全标准的食品，消费者除要求赔偿损失外，还可以向生产者或者经营者要求支付价款十倍或者损失三倍的赔偿金；增加赔偿的金额不足一千元的，为一千元。但是，食品的标签、说明书存在不影响食品安全且不会对消费者造成误导的瑕疵的除外。"}, {"name": "数据安全法", "article": "第二十七条", "text": "开展数据处理活动应当依照法律、法规的规定，建立健全全流程数据安全管理制度，组织开展数据安全教育培训，采取相应的技术措施和其他必要措施，保障数据安全。利用互联网等信息网络开展数据处理活动，应当在网络安全等级保护制度的基础上，履行上述数据安全保护义务。"}, {"name": "女职工劳动保护特别规定", "article": "第五条", "text": "用人单位不得因女职工怀孕、生育、哺乳降低其工资、予以辞退、与其解除劳动或者聘用合同。"}, {"name": "消费者权益保护法", "article": "第二十六条", "text": "经营者在经营活动中使用格式条款的，应当以显著方式提请消费者注意商品或者服务的数量和质量、价款或者费用、履行期限和方式、安全注意事项和风险警示、售后服务、民事责任等与消费者有重大利害关系的内容，并按照消费者的要求予以说明。经营者不得以格式条款、通知、声明、店堂告示等方式，作出排除或者限制消费者权利、减轻或者免除经营者责任、加重消费者责任等对消费者不公平、不合理的规定，不得利用格式条款并借助技术手段强制交易。格式条款、通知、声明、店堂告示等含有前款所列内容的，其内容无效。"}, {"name": "家用汽车产品修理更换退货责任规定", "article": "第十八条", "text": "在家用汽车产品三包有效期内，符合本规定更换、退货条件的，消费者凭三包凭证、购车发票等由销售者更换、退货。家用汽车产品自销售者开具购车发票之日起60日内或者行驶里程3000公里之内（以先到者为准），出现转向系统失效、制动系统失效、车身开裂或者燃油泄漏等严重安全性能故障，消费者选择更换或者退货的，销售者应当负责免费更换或者退货。"}, {"name": "环境保护法", "article": "第六条", "text": "一切单位和个人都有保护环境的义务。地方各级人民政府应当对本行政区域的环境质量负责。企业事业单位和其他生产经营者应当防止、减少环境污染和生态破坏，对所造成的损害依法承担责任。"}, {"name": "矿产资源法", "article": "第三条", "text": "矿产资源属于国家所有，由国务院行使国家对矿产资源的所有权。国家保障矿产资源的合理开发利用。禁止任何组织或者个人用任何手段侵占或者破坏矿产资源。勘查、开采矿产资源，必须依法分别申请、经批准取得探矿权、采矿权，并办理登记。"}, {"name": "环境影响评价法", "article": "第二十五条", "text": "建设项目的环境影响评价文件未依法经审批部门审查或者审查后未予批准的，建设单位不得开工建设。"}, {"name": "海洋环境保护法", "article": "（养殖排污相关规定）", "text": "从事海水养殖活动应当科学确定养殖密度，合理投饵、投药，防止造成海洋环境污染。养殖尾水排放应当符合相关排放标准，不得排入依法需要特殊保护的海域。"}]};
+
+let ALL_CASES = [];
+let currentCat = '';
+const IS_MOBILE = /Android|iPhone|iPad|iPod|HarmonyOS|Mobile|MicroMessenger|Weibo|QQ\//i.test(navigator.userAgent)
+  || (navigator.maxTouchPoints > 1 && /Macintosh/i.test(navigator.userAgent));
+
+function useEmbedded(data){
+    ALL_CASES = data.cases || [];
+    document.getElementById('version').textContent = (data.version || '—') + ' · 离线';
+    document.getElementById('updated').textContent = data.updated || '—';
+    document.getElementById('total').textContent = data.total || ALL_CASES.length;
+    renderCategories();
+    const params = new URLSearchParams(location.search);
+    const initCat = params.get('category');
+    const initQ = params.get('q');
+    if(initQ) document.getElementById('searchInput').value = initQ;
+    if(params.get('mode') === 'law'){
+      document.querySelector('.wrap h1').textContent = '耳辩 · 法条库';
+      document.getElementById('categories').style.display = 'none';
+    }
+    if(initCat){
+      currentCat = initCat;
+      document.querySelectorAll('.cat-btn').forEach(b => {
+        if(b.dataset.cat === initCat) b.classList.add('active');
+        else b.classList.remove('active');
+      });
+    }
+    renderCases();
+}
+
+function localLawSearch(keyword){
+  const kw = keyword.replace(/《|》/g, '');
+  const laws = (EMBEDDED_KB.laws || []).filter(l =>
+    (l.name && l.name.includes(kw)) ||
+    (l.article && l.article.includes(kw)) ||
+    (l.text && l.text.includes(kw))
+  );
+  const box = document.getElementById('caseList');
+  if(laws.length === 0){
+    box.innerHTML = '<div class="empty">没有找到匹配的法条</div>';
+    return;
+  }
+  box.innerHTML = laws.map(l => `
+    <div class="case-card">
+      <span class="case-cat">法条</span>
+      <div class="case-title">《${l.name}》${l.article}</div>
+      <div class="case-summary" style="line-height:1.8;">${l.text}</div>
+    </div>
+  `).join('');
+}
+
+async function load(){
+  try{
+    const res = await fetch(API, {signal: AbortSignal.timeout(2500)});
+    const data = await res.json();
+    ALL_CASES = data.cases || [];
+    document.getElementById('version').textContent = data.version || '—';
+    document.getElementById('updated').textContent = data.updated || '—';
+    document.getElementById('total').textContent = data.total || 0;
+        renderCategories();
+
+    // ★ 读取 URL 参数，自动筛选
+    const params = new URLSearchParams(location.search);
+    const initCat = params.get('category');
+    const initQ = params.get('q');
+    if(initQ) document.getElementById('searchInput').value = initQ;
+    // ★ 法条模式
+const isLawMode = params.get('mode') === 'law';
+if(isLawMode){
+  document.querySelector('.wrap h1').textContent = '耳辩 · 法条库';
+  document.getElementById('categories').style.display = 'none';
+}
+    if(initCat){
+      currentCat = initCat;
+      document.querySelectorAll('.cat-btn').forEach(b => {
+        if(b.dataset.cat === initCat) b.classList.add('active');
+        else b.classList.remove('active');
+      });
+    }
+
+    renderCases();
+  }catch(e){
+    useEmbedded(EMBEDDED_KB);
+  }
+}
+
+function renderCategories(){
+  const cats = {};
+  ALL_CASES.forEach(c => { cats[c.category] = (cats[c.category] || 0) + 1; });
+  const box = document.getElementById('categories');
+  const html = [`<button class="cat-btn active" data-cat="">全部 (${ALL_CASES.length})</button>`];
+  Object.keys(cats).forEach(k => {
+    html.push(`<button class="cat-btn" data-cat="${k}">${k} (${cats[k]})</button>`);
+  });
+  box.innerHTML = html.join('');
+  box.querySelectorAll('.cat-btn').forEach(btn => {
+    btn.onclick = () => {
+      box.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentCat = btn.dataset.cat;
+      renderCases();
+    };
+  });
+}
+
+async function renderCases(){
+  const params = new URLSearchParams(location.search);
+  const isLawMode = params.get('mode') === 'law';
+  const keyword = document.getElementById('searchInput').value.trim();
+
+  // ★ 法条模式
+  if(isLawMode && keyword){
+    try {
+      const res = await fetch(`/api/law?q=${encodeURIComponent(keyword)}`);
+      const data = await res.json();
+      const box = document.getElementById('caseList');
+      if(!data.laws || data.laws.length === 0){
+        box.innerHTML = '<div class="empty">没有找到匹配的法条</div>';
+        return;
+      }
+      box.innerHTML = data.laws.map(l => `
+        <div class="case-card">
+          <span class="case-cat">法条</span>
+          <div class="case-title">《${l.name}》${l.article}</div>
+          <div class="case-summary" style="line-height:1.8;">${l.text}</div>
+        </div>
+      `).join('');
+      return;
+    } catch(e) {
+      localLawSearch(keyword);
+      return;
+    }
+  }
+
+  // ★ 以下是原有的案例模式逻辑
+  const kw = keyword.toLowerCase();
+  let list = ALL_CASES;
+  if(currentCat) list = list.filter(c => c.category === currentCat);
+  if(kw){
+    list = list.filter(c =>
+      (c.title||'').toLowerCase().includes(kw) ||
+      (c.summary||'').toLowerCase().includes(kw) ||
+      (c.law||'').toLowerCase().includes(kw)
+    );
+  }
+  const box = document.getElementById('caseList');
+  if(list.length === 0){
+    box.innerHTML = '<div class="empty">没有找到匹配的案例</div>';
+    return;
+  }
+  box.innerHTML = list.map(c => {
+    let srcHtml = '';
+    if(c.source){
+      const url = (c.source_url || '').trim();
+      if(IS_MOBILE || !url){
+        /* 手机端：不跳转，弹页内缩略图卡，点开即可看全部来源信息 */
+        srcHtml = `<button type="button" class="case-source" data-case-id="${c.id || ''}">来源：${c.source} · 点开看 ▸</button>`;
+      }else{
+        /* 电脑端：新标签页直达原文，游戏本体不受影响 */
+        srcHtml = `<a class="case-source" href="${url}" target="_blank" rel="noopener noreferrer">来源：${c.source} ↗</a>`;
+      }
+    }
+    return `
+    <div class="case-card">
+      <span class="case-cat">${c.category || '未分类'}</span>
+      <div class="case-title">${c.title || ''}</div>
+      <div class="case-summary">${c.summary || ''}</div>
+      ${c.law ? `<div class="case-row"><b>法条：</b>${c.law}</div>` : ''}
+      ${c.penalty ? `<div class="case-row"><b>处罚：</b>${c.penalty}</div>` : ''}
+      ${srcHtml}
+    </div>
+  `;
+  }).join('');
+}
+
+document.getElementById('searchInput').addEventListener('input', renderCases);
+load();
+
+/* ===== 案例来源：手机端页内缩略图，点开看全文；电脑端直接新标签直达 ===== */
+const sourceMask = document.getElementById('sourceMask');
+const sourceCard = document.getElementById('sourceCard');
+const sourceThumb = document.getElementById('sourceThumb');
+const sourceTip = document.getElementById('sourceTip');
+const sourceCopyBtn = document.getElementById('sourceCopy');
+const sourceNameEl = document.getElementById('sourceName');
+const sourceDateEl = document.getElementById('sourceDate');
+const sourceUrlEl = document.getElementById('sourceUrl');
+const sourceSummaryEl = document.getElementById('sourceSummary');
+const sourceLawEl = document.getElementById('sourceLaw');
+const sourcePenaltyEl = document.getElementById('sourcePenalty');
+const thumbHost = document.getElementById('thumbHost');
+const thumbBrand = document.getElementById('thumbBrand');
+const thumbTitle = document.getElementById('thumbTitle');
+const thumbTag = document.getElementById('thumbTag');
+const thumbMore = document.getElementById('thumbMore');
+let currentSourceUrl = '';
+
+function hostOf(url){
+  try { return new URL(url).host.replace(/^www\./, ''); }
+  catch(e){ return url ? 'source' : '—'; }
+}
+
+function openSourceCard(record){
+  currentSourceUrl = (record.source_url || '').trim();
+
+  /* 缩略图：模拟一张"原网页"的缩略预览 */
+  thumbHost.textContent = currentSourceUrl ? hostOf(currentSourceUrl) : (record.source || '案例来源');
+  thumbBrand.textContent = record.source || '案例来源';
+  thumbTitle.textContent = record.title || '案例详情';
+  thumbTag.textContent = record.law ? record.law : (record.category || '案例');
+
+  sourceNameEl.textContent = record.source || '—';
+  sourceDateEl.textContent = record.publish_date || '—';
+  sourceSummaryEl.textContent = record.summary || '暂无摘要';
+  sourceLawEl.textContent = record.law || '未标注';
+  sourcePenaltyEl.textContent = record.penalty || '未公开';
+  sourceUrlEl.textContent = currentSourceUrl || '该案例未提供原文链接';
+
+  sourceTip.textContent = '';
+  sourceCopyBtn.disabled = !currentSourceUrl;
+
+  /* 打开即展开，一眼看到全部内容；点缩略图可收起 */
+  sourceCard.classList.add('expanded');
+  thumbMore.textContent = '收起 ▾';
+
+  sourceMask.classList.add('open');
+  sourceMask.setAttribute('aria-hidden', 'false');
+  document.body.classList.add('source-open');
+}
+
+function toggleSourceDetail(){
+  const expanded = sourceCard.classList.toggle('expanded');
+  thumbMore.textContent = expanded ? '收起 ▾' : '点开查看 ▸';
+  if(expanded){
+    /* 展开后滚到详情顶部，手机上一眼能看到摘要 */
+    setTimeout(() => {
+      const detail = document.getElementById('sourceDetail');
+      if(detail && sourceCard.scrollHeight > sourceCard.clientHeight){
+        detail.scrollIntoView({ behavior:'smooth', block:'nearest' });
+      }
+    }, 60);
+  }
+}
+
+function closeSourceCard(){
+  sourceMask.classList.remove('open');
+  sourceMask.setAttribute('aria-hidden', 'true');
+  sourceCard.classList.remove('expanded');
+  document.body.classList.remove('source-open');
+}
+
+function fallbackCopy(text){
+  try{
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly', '');
+    ta.style.position = 'fixed';
+    ta.style.top = '-1000px';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    ta.setSelectionRange(0, text.length);
+    const ok = document.execCommand('copy');
+    document.body.removeChild(ta);
+    return ok;
+  }catch(e){ return false; }
+}
+
+function copySourceUrl(){
+  if(!currentSourceUrl) return;
+  const done = (ok) => {
+    sourceTip.style.color = ok ? '#3f9d6b' : '#c96b5a';
+    sourceTip.textContent = ok
+      ? '已复制，粘贴到浏览器即可查看原文'
+      : '复制失败，长按上方链接手动复制';
+  };
+  if(navigator.clipboard && window.isSecureContext){
+    navigator.clipboard.writeText(currentSourceUrl).then(() => done(true)).catch(() => done(fallbackCopy(currentSourceUrl)));
+    return;
+  }
+  done(fallbackCopy(currentSourceUrl));
+}
+
+document.getElementById('caseList').addEventListener('click', (event) => {
+  const trigger = event.target.closest('.case-source');
+  if(!trigger) return;
+  /* 电脑端是 <a target="_blank">，让它自己跳转 */
+  if(trigger.tagName === 'A') return;
+  event.preventDefault();
+  event.stopPropagation();
+  const record = ALL_CASES.find((item) => item.id === trigger.dataset.caseId);
+  if(record) openSourceCard(record);
+});
+sourceThumb.addEventListener('click', (event) => {
+  event.preventDefault();
+  event.stopPropagation();
+  toggleSourceDetail();
+});
+sourceThumb.addEventListener('keydown', (event) => {
+  if(event.key === 'Enter' || event.key === ' '){
+    event.preventDefault();
+    toggleSourceDetail();
+  }
+});
+sourceCopyBtn.addEventListener('click', copySourceUrl);
+document.getElementById('sourceClose').addEventListener('click', closeSourceCard);
+document.getElementById('sourceCloseX').addEventListener('click', closeSourceCard);
+sourceMask.addEventListener('click', (event) => { if(event.target === sourceMask) closeSourceCard(); });
+document.addEventListener('keydown', (event) => {
+  if(event.key !== 'Escape') return;
+  if(sourceMask.classList.contains('open')){ closeSourceCard(); }
+});
+</script>
+</body>
+</html>

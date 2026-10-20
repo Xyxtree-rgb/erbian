@@ -1,0 +1,1816 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#c9ccd0">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="耳辩">
+<link rel="apple-touch-icon" href="assets/icon/icon-192.png">
+
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<script>
+  window.location.replace("./index.html");
+</script>
+<title>耳辩 · 与尔同辩（手机版）</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700&family=Noto+Sans+SC:wght@200;300;400;500;700&family=Zhi+Mang+Xing&display=swap');
+:root{
+  --ink:#2d2d2d;
+  --ink-60:rgba(45,45,45,.6);
+  --ink-35:rgba(45,45,45,.35);
+  --ink-12:rgba(45,45,45,.12);
+  --blue:#5b8def; --pink:#e07ab8;
+  --iri:linear-gradient(100deg,#7ac8ff,#c9a7ff,#ff9ed2,#ffd9a0,#8ef0d2);
+  --ease:cubic-bezier(.65,0,.35,1);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;}
+body{
+  font-family:'Space Grotesk','Noto Sans SC',-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+  background:linear-gradient(160deg,#d8dbdf 0%,#c4c7cb 55%,#cfd3d8 100%);
+  color:var(--ink);overflow-x:hidden;min-height:100vh;
+}
+
+/* ===== 背景：极光斑 + 几何线圆 ===== */
+.bg-fx{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;}
+.aurora{position:absolute;border-radius:50%;filter:blur(90px);opacity:.5;will-change:transform;}
+.a1{width:56vmax;height:56vmax;left:-14vmax;top:-18vmax;background:radial-gradient(circle at 40% 40%,#9fd0ff,transparent 65%);animation:drift1 26s ease-in-out infinite alternate;}
+.a2{width:48vmax;height:48vmax;right:-16vmax;top:20vh;background:radial-gradient(circle at 55% 45%,#ffc4e6,transparent 65%);animation:drift2 32s ease-in-out infinite alternate;}
+.a3{width:44vmax;height:44vmax;left:20vw;bottom:-22vmax;background:radial-gradient(circle at 50% 50%,#ffe9bf,transparent 62%);animation:drift3 38s ease-in-out infinite alternate;}
+@keyframes drift1{to{transform:translate(9vmax,7vmax) scale(1.12);}}
+@keyframes drift2{to{transform:translate(-8vmax,6vmax) scale(.92);}}
+@keyframes drift3{to{transform:translate(6vmax,-7vmax) scale(1.08);}}
+.bg-fx svg.geo{position:absolute;inset:0;width:100%;height:100%;}
+
+/* ===== 开屏 ===== */
+.splash{
+  position:fixed;inset:0;z-index:500;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  transition:opacity .8s var(--ease),transform .8s var(--ease);
+}
+.splash.done{opacity:0;pointer-events:none;transform:scale(1.04);}
+.splash-pieces{display:flex;align-items:flex-end;gap:38px;margin-bottom:36px;}
+.sp-piece{width:100px;filter:drop-shadow(0 18px 22px rgba(60,80,120,.28));}
+.sp-piece svg{width:100%;height:auto;display:block;}
+.sp-piece.p1{animation:floatA 4.6s ease-in-out infinite;}
+.sp-piece.p2{animation:floatB 4.6s ease-in-out 1s infinite;}
+@keyframes floatA{0%,100%{transform:translateY(0) rotate(-2.5deg);}50%{transform:translateY(-14px) rotate(1.5deg);}}
+@keyframes floatB{0%,100%{transform:translateY(-6px) rotate(2deg);}50%{transform:translateY(8px) rotate(-1.5deg);}}
+.splash-title{font-size:clamp(52px,11vw,92px);font-weight:200;letter-spacing:.42em;text-indent:.42em;color:var(--ink);}
+.splash-line{width:130px;height:2px;margin:24px 0 18px;background:var(--iri);border-radius:2px;}
+.splash-sub{font-size:13px;letter-spacing:.55em;text-indent:.55em;color:var(--ink-60);font-weight:300;margin-bottom:46px;}
+.splash-btn{
+  font-family:inherit;font-size:15px;font-weight:500;letter-spacing:.35em;text-indent:.35em;
+  padding:16px 54px;background:#2d2d2d;color:#f2f3f5;border:none;border-radius:999px;cursor:pointer;
+  box-shadow:0 14px 34px rgba(45,45,45,.28);
+  transition:transform .25s var(--ease),box-shadow .25s var(--ease);
+}
+.splash-btn:hover{transform:translateY(-2px);box-shadow:0 18px 44px rgba(45,45,45,.34);}
+.splash-btn:active{transform:translateY(1px) scale(.98);}
+
+/* ===== 游戏区 ===== */
+.app{position:relative;z-index:1;flex:1;display:flex;flex-direction:column;max-width:900px;width:100%;margin:0 auto;padding:14px 14px 110px;}
+
+/* 顶部 HUD */
+.topbar{
+  display:flex;align-items:center;gap:10px;margin-bottom:12px;
+  background:rgba(255,255,255,.35);backdrop-filter:blur(22px) saturate(1.3);-webkit-backdrop-filter:blur(22px) saturate(1.3);
+  border:1px solid rgba(255,255,255,.55);border-radius:20px;padding:8px 12px;
+  box-shadow:0 12px 32px rgba(60,70,90,.12);
+}
+.hud{display:flex;gap:10px;flex:1;min-width:0;flex-wrap:wrap;}
+.icon-btn{
+  width:40px;height:40px;flex-shrink:0;border:1px solid rgba(255,255,255,.6);border-radius:12px;
+  background:rgba(255,255,255,.4);font-size:15px;color:var(--ink);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;position:relative;font-family:inherit;
+  transition:background .167s var(--ease),transform .167s var(--ease);
+}
+.icon-btn:hover{background:rgba(255,255,255,.75);}
+.icon-btn:active{transform:scale(.92);}
+#fragBtn .frag-badge{
+  position:absolute;top:-5px;right:-5px;min-width:17px;height:17px;padding:0 5px;
+  background:var(--iri);color:#2d2d2d;font-size:10px;font-weight:700;
+  border-radius:9px;border:1.5px solid #fff;
+  display:flex;align-items:center;justify-content:center;
+}
+.player-chip{
+  display:flex;align-items:center;gap:9px;
+  background:rgba(255,255,255,.3);border:1px solid rgba(255,255,255,.45);
+  border-radius:16px;padding:5px 12px 5px 6px;
+  transition:all .25s var(--ease);flex:1;min-width:0;max-width:180px;
+}
+.player-chip.active{
+  background:linear-gradient(rgba(255,255,255,.6),rgba(255,255,255,.6)) padding-box,var(--iri) border-box;
+  border:1.5px solid transparent;
+  box-shadow:0 8px 24px rgba(120,140,200,.28);
+}
+.chip-avatar{width:34px;height:34px;border-radius:50%;border:1px solid rgba(255,255,255,.75);overflow:hidden;background:rgba(255,255,255,.5);flex-shrink:0;}
+.chip-avatar svg{width:100%;height:100%;display:block;}
+.chip-info{flex:1;min-width:0;}
+.chip-name{font-size:11px;font-weight:500;letter-spacing:.1em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink-60);}
+.chip-score{font-size:20px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.1;color:var(--ink);}
+.chip-score small{font-size:10px;font-weight:400;color:var(--ink-35);margin-left:2px;}
+
+/* ===== 棋盘 ===== */
+.scene{position:relative;flex:1;display:flex;align-items:center;justify-content:center;padding:4px 0;}
+.board-wrap{position:relative;width:100%;max-width:680px;}
+.board{
+  position:relative;width:100%;aspect-ratio:680/560;
+  background:rgba(255,255,255,.2);backdrop-filter:blur(20px) saturate(1.2);-webkit-backdrop-filter:blur(20px) saturate(1.2);
+  border:1px solid rgba(255,255,255,.5);border-radius:28px;padding:20px;
+  box-shadow:0 24px 60px rgba(60,70,95,.14);
+}
+.board svg.path-svg{position:absolute;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;}
+
+#tileLayer{position:relative;width:100%;height:100%;z-index:2;}
+.twrap{position:absolute;z-index:2;transform-origin:center;transition:transform .2s;}
+.tile{
+  position:relative;width:100%;height:100%;
+  background:rgba(255,255,255,.45);border:1px solid rgba(255,255,255,.75);border-radius:16px;
+  box-shadow:0 6px 18px rgba(70,85,110,.1);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  overflow:hidden;
+}
+.tile::before{
+  content:attr(data-num);position:absolute;top:5px;left:8px;
+  font-size:10px;font-weight:500;color:var(--ink-35);
+}
+.t-key{font-size:16px;font-weight:700;letter-spacing:.5px;line-height:1;color:var(--ink);}
+.t-icon{font-size:13px;line-height:1;margin-bottom:3px;color:var(--ink-60);}
+.t-place{font-size:9px;font-weight:400;letter-spacing:.08em;color:var(--ink-35);margin-top:2px;}
+
+.tile.start{background:rgba(255,255,255,.62);}
+.tile.finish{background:linear-gradient(135deg,rgba(255,233,180,.55),rgba(255,255,255,.45));}
+.tile.debate{background:linear-gradient(135deg,rgba(255,158,180,.22),rgba(255,255,255,.4));}
+.tile.knowledge{background:linear-gradient(135deg,rgba(142,240,210,.26),rgba(255,255,255,.4));}
+.tile.trap{background:linear-gradient(135deg,rgba(224,73,122,.16),rgba(255,255,255,.4));}
+.tile.item{background:linear-gradient(135deg,rgba(201,167,255,.26),rgba(255,255,255,.4));}
+.tile.mystery{background:linear-gradient(135deg,rgba(122,200,255,.26),rgba(255,255,255,.4));}
+
+.tile.spring{animation:tileSpring .5s cubic-bezier(.34,1.56,.64,1);z-index:10;box-shadow:0 0 0 2px rgba(255,255,255,.9),0 12px 32px rgba(120,140,200,.35);}
+@keyframes tileSpring{
+  0%{transform:translateY(0) scale(1);}
+  40%{transform:translateY(10px) scale(.95);}
+  70%{transform:translateY(-14px) scale(1.06);}
+  100%{transform:translateY(0) scale(1);}
+}
+
+/* 玻璃棋子 */
+.piece{
+  position:absolute;z-index:15;width:48px;height:68px;
+  transition:top .28s linear,left .28s linear;
+  pointer-events:none;
+  filter:drop-shadow(0 10px 12px rgba(60,80,120,.3));
+}
+.piece svg{width:100%;height:100%;display:block;}
+
+/* ===== 骰子 ===== */
+.dice-wrap{
+  position:fixed;bottom:26px;left:50%;transform:translateX(-50%);z-index:50;
+  display:flex;flex-direction:column;align-items:center;gap:8px;
+}
+.dice-btn{
+  position:relative;width:74px;height:74px;border-radius:50%;
+  background:rgba(255,255,255,.55);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border:1px solid rgba(255,255,255,.85);
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  font-family:inherit;font-size:26px;font-weight:700;color:var(--ink);
+  transition:transform .2s var(--ease);
+}
+.dice-btn::before{
+  content:'';position:absolute;inset:-4px;border-radius:50%;z-index:-1;
+  background:conic-gradient(from 0deg,#7ac8ff,#c9a7ff,#ff9ed2,#ffd9a0,#8ef0d2,#7ac8ff);
+  filter:blur(7px);opacity:.75;animation:spinRing 7s linear infinite;
+}
+@keyframes spinRing{to{transform:rotate(360deg);}}
+.dice-btn:hover{transform:translateY(-2px);}
+.dice-btn:active{transform:scale(.94);}
+.dice-btn:disabled{opacity:.55;cursor:not-allowed;}
+.dice-btn.shake{animation:diceShake .4s ease-in-out;}
+@keyframes diceShake{
+  0%,100%{transform:rotate(0deg);}
+  20%{transform:rotate(-15deg);}
+  40%{transform:rotate(15deg);}
+  60%{transform:rotate(-10deg);}
+  80%{transform:rotate(10deg);}
+}
+.dice-label{font-size:11px;font-weight:500;letter-spacing:.4em;text-indent:.4em;color:var(--ink-60);}
+
+/* ===== 弹窗 ===== */
+.overlay{
+  position:fixed;inset:0;background:rgba(190,196,202,.45);
+  backdrop-filter:blur(16px) saturate(1.1);-webkit-backdrop-filter:blur(16px) saturate(1.1);
+  z-index:100;display:flex;align-items:center;justify-content:center;padding:16px;
+  opacity:0;pointer-events:none;transition:opacity .35s var(--ease);
+}
+.overlay.open{opacity:1;pointer-events:auto;}
+.modal{
+  background:rgba(250,251,253,.68);backdrop-filter:blur(34px) saturate(1.4);-webkit-backdrop-filter:blur(34px) saturate(1.4);
+  border:1px solid rgba(255,255,255,.85);border-radius:26px;width:100%;max-width:500px;
+  max-height:88vh;overflow-y:auto;position:relative;
+  transform:translateY(28px) scale(.96);transition:transform .45s var(--ease);
+  box-shadow:0 30px 80px rgba(55,65,90,.28);
+}
+.overlay.open .modal{transform:translateY(0) scale(1);}
+
+/* 知识卡片 */
+.kcard{padding:30px 26px;text-align:center;}
+.kcard-tag{
+  display:inline-block;font-size:11px;font-weight:500;letter-spacing:.35em;text-indent:.35em;
+  padding:6px 18px;border-radius:999px;margin-bottom:16px;border:1px solid;
+}
+.kcard-tag.know{color:#0b8a63;border-color:rgba(14,168,119,.45);background:rgba(142,240,210,.18);}
+.kcard-tag.trap{color:#c23367;border-color:rgba(224,73,122,.4);background:rgba(255,158,194,.15);}
+.kcard-tag.item{color:#6a4fc9;border-color:rgba(150,120,230,.45);background:rgba(201,167,255,.18);}
+.kcard-title{font-size:20px;font-weight:700;letter-spacing:.06em;margin-bottom:16px;color:var(--ink);}
+.kcard-body{
+  font-size:14px;font-weight:400;line-height:2;color:#3d3d3d;
+  margin-bottom:22px;text-align:left;
+  background:rgba(255,255,255,.5);border-radius:18px;padding:18px;
+  border:1px solid rgba(255,255,255,.8);
+}
+.kcard-body b{color:var(--ink);font-weight:700;}
+.kcard-body .highlight{background:linear-gradient(transparent 55%,rgba(255,217,160,.85) 55%);padding:0 3px;font-weight:700;color:#8a6a1f;}
+.kcard-btn{
+  font-family:inherit;font-size:14px;font-weight:500;letter-spacing:.3em;text-indent:.3em;
+  padding:14px 44px;background:#2d2d2d;color:#f2f3f5;border:none;border-radius:999px;cursor:pointer;
+  box-shadow:0 10px 26px rgba(45,45,45,.25);
+  transition:transform .2s var(--ease),box-shadow .2s var(--ease);
+}
+.kcard-btn:hover{transform:translateY(-2px);box-shadow:0 14px 32px rgba(45,45,45,.3);}
+.kcard-btn:active{transform:translateY(1px) scale(.98);}
+.kcard-btn.ghost{background:rgba(255,255,255,.55);color:var(--ink);border:1px solid rgba(255,255,255,.9);box-shadow:none;}
+
+/* 辩论弹窗 */
+.debate-modal{
+  background:rgba(250,251,253,.68);backdrop-filter:blur(34px) saturate(1.4);-webkit-backdrop-filter:blur(34px) saturate(1.4);
+  border:1px solid rgba(255,255,255,.85);border-radius:26px;width:100%;max-width:520px;
+  position:relative;overflow:hidden;
+  box-shadow:0 30px 80px rgba(55,65,90,.28);
+}
+.debate-bg{position:absolute;inset:0;z-index:0;opacity:.09;pointer-events:none;}
+.debate-bg svg{width:100%;height:100%;}
+.debate-content{position:relative;z-index:1;padding:26px 22px;}
+.debate-header{text-align:center;margin-bottom:16px;padding-bottom:14px;position:relative;}
+.debate-header::after{
+  content:'';position:absolute;left:50%;bottom:0;transform:translateX(-50%);
+  width:72px;height:2px;background:var(--iri);border-radius:2px;
+}
+.debate-header h3{font-size:15px;font-weight:700;letter-spacing:.15em;color:var(--ink);margin-bottom:5px;}
+.debate-header p{font-size:11px;color:var(--ink-60);letter-spacing:.3em;text-indent:.3em;font-weight:400;}
+.debate-q{font-size:17px;font-weight:700;line-height:1.75;margin:6px 0 14px;text-align:center;padding:0 6px;color:var(--ink);}
+/* 正反方立场卡片 */
+.debate-sides{display:flex;gap:10px;margin-bottom:12px;}
+.side-pro,.side-con{
+  flex:1;padding:11px 13px;border-radius:14px;border:1px solid;
+  font-size:12px;line-height:1.65;background:rgba(255,255,255,.4);
+}
+.side-pro{border-color:rgba(91,141,239,.5);}
+.side-pro .side-label{color:var(--blue);}
+.side-con{border-color:rgba(224,122,184,.5);}
+.side-con .side-label{color:var(--pink);}
+.side-label{font-weight:700;font-size:10px;letter-spacing:.35em;margin-bottom:4px;}
+.side-text{font-weight:400;color:#3d3d3d;}
+
+/* 角色彩蛋 */
+.debate-egg{
+  font-size:12px;color:var(--ink-60);
+  padding:8px 12px;border-left:2px solid var(--ink-12);
+  margin-bottom:12px;line-height:1.7;
+  background:rgba(255,255,255,.3);border-radius:0 10px 10px 0;
+}
+
+.debate-story{
+  font-size:12.5px;color:var(--ink-60);line-height:1.75;
+  text-align:left;padding:11px 14px;margin-bottom:14px;
+  background:rgba(255,255,255,.4);border-radius:14px;border-left:2px solid var(--ink-12);
+}
+.debate-input{
+  width:100%;min-height:84px;padding:13px 15px;font-family:inherit;
+  font-size:14px;line-height:1.7;
+  border:1px solid rgba(255,255,255,.9);border-radius:14px;resize:vertical;outline:none;
+  background:rgba(255,255,255,.55);color:var(--ink);
+  transition:border-color .2s,box-shadow .2s;
+}
+.debate-input:focus{border-color:rgba(91,141,239,.6);box-shadow:0 0 0 3px rgba(91,141,239,.15);}
+.debate-input::placeholder{color:var(--ink-35);}
+.debate-actions{display:flex;gap:10px;margin-top:12px;}
+.debate-actions button{
+  flex:1;font-family:inherit;font-size:13px;font-weight:500;letter-spacing:.25em;text-indent:.25em;
+  padding:13px;border:none;border-radius:999px;cursor:pointer;transition:all .18s var(--ease);
+}
+.debate-actions #submitBtn{background:#2d2d2d;color:#f2f3f5;flex:1.6;box-shadow:0 8px 22px rgba(45,45,45,.25);}
+.debate-actions #submitBtn:hover:not(:disabled){transform:translateY(-1px);}
+.debate-actions #submitBtn:disabled{opacity:.55;cursor:wait;}
+.debate-actions #passBtn{background:rgba(255,255,255,.55);color:var(--ink-60);border:1px solid rgba(255,255,255,.9);}
+.debate-result{
+  font-size:13.5px;font-weight:500;text-align:center;padding:14px;border-radius:16px;
+  margin-top:14px;display:none;line-height:1.7;border:1px solid;
+}
+.debate-result.show{display:block;}
+.debate-result.ok{background:rgba(142,240,210,.2);color:#0b8a63;border-color:rgba(14,168,119,.4);}
+.debate-result.ng{background:rgba(255,158,194,.16);color:#c23367;border-color:rgba(224,73,122,.4);}
+
+/* 碎片提示 */
+.frag-toast{
+  position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-70px);
+  background:rgba(30,30,35,.78);backdrop-filter:blur(14px);
+  color:#f2f3f5;padding:12px 26px;border-radius:999px;
+  font-size:13px;font-weight:500;letter-spacing:.1em;z-index:200;
+  transition:transform .5s var(--ease);
+  pointer-events:none;border:1px solid rgba(255,255,255,.22);
+}
+.frag-toast.show{transform:translateX(-50%) translateY(0);}
+.frag-toast .frag-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--iri);margin-right:9px;vertical-align:middle;}
+
+/* AI 对手发言条（移动端） */
+.ai-say{
+  position:fixed;top:62px;left:50%;width:min(94vw,520px);
+  transform:translateX(-50%) translateY(-130%);
+  background:rgba(28,30,34,.92);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  border:1px solid rgba(255,255,255,.2);border-radius:18px;
+  padding:12px 16px;z-index:210;color:#f2f3f5;
+  box-shadow:0 16px 40px rgba(20,30,50,.26);
+  transition:transform .42s cubic-bezier(.22,1,.36,1),opacity .42s ease;
+  opacity:0;pointer-events:none;
+}
+.ai-say.show{transform:translateX(-50%) translateY(0);opacity:1;}
+.ai-say-name{font-size:10px;font-weight:700;letter-spacing:.2em;color:#8ef0d2;margin-bottom:6px;}
+.ai-say-text{font-size:13px;line-height:1.68;letter-spacing:.01em;}
+.ai-say-verdict{font-size:11px;line-height:1.6;margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,.14);color:rgba(255,255,255,.66);}
+.ai-say-verdict b{color:#ffd9a0;font-weight:700;}
+
+/* 手记 */
+.frag-modal{padding:28px 22px;}
+.frag-title{font-size:20px;font-weight:700;letter-spacing:.3em;text-indent:.3em;text-align:center;margin-bottom:6px;color:var(--ink);}
+.frag-sub{font-size:12px;color:var(--ink-60);letter-spacing:.15em;text-align:center;margin-bottom:20px;}
+.frag-progress{display:flex;justify-content:center;gap:7px;margin-bottom:20px;}
+.frag-progress .dot{width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.5);border:1px solid rgba(45,45,45,.2);}
+.frag-progress .dot.on{background:var(--iri);border-color:transparent;}
+.frag-list{display:flex;flex-direction:column;gap:12px;margin-bottom:20px;}
+.frag-item{
+  background:rgba(255,255,255,.45);border:1px solid rgba(255,255,255,.75);
+  border-radius:16px;padding:14px 16px;transition:all .2s var(--ease);
+}
+.frag-item.locked{opacity:.45;}
+.frag-item .frag-head{display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:700;color:var(--ink);margin-bottom:6px;letter-spacing:.05em;}
+.frag-item .frag-body{font-size:12.5px;color:#3d3d3d;line-height:1.75;}
+.frag-item.locked .frag-body{color:var(--ink-35);}
+
+/* 结算 */
+.end-modal{padding:36px 26px;text-align:center;}
+.end-modal h2{
+  font-size:26px;font-weight:700;letter-spacing:.12em;margin-bottom:8px;
+  background:var(--iri);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+}
+.end-modal .end-sub{font-size:12.5px;color:var(--ink-60);letter-spacing:.2em;margin-bottom:22px;font-weight:400;}
+.end-stone{
+  background:rgba(255,255,255,.5);border:1px solid rgba(255,255,255,.85);
+  border-radius:20px;padding:26px 22px;margin:20px 0;text-align:center;
+}
+.end-stone .stone-text{font-size:15px;font-weight:400;color:#3d3d3d;line-height:2;letter-spacing:.1em;}
+.end-frag-info{font-size:12.5px;color:var(--ink-60);line-height:1.8;margin-bottom:18px;}
+.end-scores{display:flex;justify-content:center;gap:18px;margin-bottom:22px;flex-wrap:wrap;}
+.end-p{
+  text-align:center;background:rgba(255,255,255,.4);border-radius:18px;
+  padding:16px 26px;border:1px solid rgba(255,255,255,.7);min-width:100px;
+}
+.end-p.winner{
+  background:linear-gradient(rgba(255,255,255,.62),rgba(255,255,255,.62)) padding-box,var(--iri) border-box;
+  border:1.5px solid transparent;
+  box-shadow:0 10px 30px rgba(150,140,220,.25);
+}
+.end-p .e-name{font-size:11px;color:var(--ink-60);font-weight:500;letter-spacing:.15em;margin-bottom:6px;}
+.end-p .e-score{font-size:36px;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums;}
+
+/* 模式选择 */
+.mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:4px 4px 8px;}
+.mode-btn{
+  background:rgba(255,255,255,.45);border:1px solid rgba(255,255,255,.8);
+  border-radius:20px;padding:24px 16px;text-align:center;cursor:pointer;
+  font-family:inherit;transition:all .2s var(--ease);
+}
+.mode-btn:hover{
+  transform:translateY(-3px);
+  background:linear-gradient(rgba(255,255,255,.65),rgba(255,255,255,.65)) padding-box,var(--iri) border-box;
+  border:1.5px solid transparent;
+  box-shadow:0 14px 34px rgba(120,140,200,.22);
+}
+.mode-btn h4{font-size:16px;font-weight:700;letter-spacing:.15em;margin-bottom:8px;color:var(--ink);}
+.mode-btn p{font-size:12px;color:var(--ink-60);font-weight:400;line-height:1.6;}
+
+@media(max-width:640px){
+  .splash-title{font-size:52px;}
+  .sp-piece{width:78px;}
+  .mode-grid{grid-template-columns:1fr;}
+  .piece{width:40px;height:56px;}
+  .board{padding:12px;}
+}
+
+/* ===== 知识库抽屉 ===== */
+.kb-fab{
+  position:fixed;top:16px;right:16px;width:46px;height:46px;border-radius:50%;
+  border:1px solid rgba(255,255,255,.75);
+  background:rgba(255,255,255,.5);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  font-family:inherit;font-size:15px;font-weight:500;color:var(--ink);
+  cursor:pointer;z-index:50;
+  box-shadow:0 8px 22px rgba(60,70,95,.16);
+  transition:transform .2s var(--ease),background .2s var(--ease);
+  display:flex;align-items:center;justify-content:center;padding:0;
+}
+.kb-fab:hover{transform:translateY(-2px);background:rgba(255,255,255,.78);}
+.kb-fab:active{transform:scale(.93);}
+
+.drawer-mask{
+  position:fixed;inset:0;background:rgba(160,166,172,.4);
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  z-index:900;opacity:0;pointer-events:none;transition:opacity .3s var(--ease);
+}
+.drawer-mask.show{opacity:1;pointer-events:auto;}
+
+.drawer{
+  position:fixed;top:0;right:0;bottom:0;width:min(94vw,480px);
+  background:rgba(236,239,243,.85);backdrop-filter:blur(30px) saturate(1.3);-webkit-backdrop-filter:blur(30px) saturate(1.3);
+  border-left:1px solid rgba(255,255,255,.7);
+  z-index:901;transform:translateX(105%);
+  transition:transform .42s var(--ease);
+  display:flex;flex-direction:column;
+  box-shadow:-20px 0 60px rgba(60,70,95,.2);
+}
+.drawer.show{transform:translateX(0);}
+
+.drawer-header{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:14px 18px;border-bottom:1px solid var(--ink-12);flex-shrink:0;
+}
+.drawer-title{font-size:14px;font-weight:700;letter-spacing:.3em;}
+.drawer-close{
+  width:34px;height:34px;border:1px solid rgba(255,255,255,.75);border-radius:50%;
+  background:rgba(255,255,255,.5);cursor:pointer;font-size:14px;color:var(--ink);
+  display:flex;align-items:center;justify-content:center;line-height:1;
+  transition:background .167s;
+}
+.drawer-close:hover{background:rgba(255,255,255,.85);}
+
+.drawer-body{flex:1;overflow:hidden;position:relative;}
+.drawer-body iframe{width:100%;height:100%;border:0;display:block;}
+
+/* 辩题弹窗里的知识库按钮 */
+.kb-inline-btn{
+  display:inline-flex;align-items:center;
+  font-family:inherit;font-size:11.5px;font-weight:500;letter-spacing:.1em;
+  padding:6px 14px;background:rgba(255,255,255,.45);color:var(--ink);
+  border:1px solid rgba(255,255,255,.85);border-radius:999px;
+  cursor:pointer;margin-bottom:10px;transition:background .167s;
+}
+.kb-inline-btn:hover{background:rgba(255,255,255,.8);}
+
+/* ===== 手机端专属适配 ===== */
+.app{padding:8px 8px 96px;}
+.topbar{padding:6px 8px;gap:6px;border-radius:16px;}
+.icon-btn{width:34px;height:34px;border-radius:10px;font-size:13px;}
+.player-chip{gap:6px;padding:4px 8px 4px 4px;border-radius:12px;max-width:150px;}
+.chip-avatar{width:26px;height:26px;}
+.chip-name{font-size:10px;}
+.chip-score{font-size:16px;}
+.board{padding:8px;border-radius:20px;}
+.tile{border-radius:11px;}
+.tile::before{font-size:8px;top:3px;left:5px;}
+.t-key{font-size:12px;}
+.t-icon{font-size:10px;margin-bottom:1px;}
+.t-place{font-size:7.5px;margin-top:1px;}
+.piece{width:34px;height:48px;}
+.dice-wrap{bottom:16px;}
+.dice-btn{width:62px;height:62px;font-size:22px;}
+.frag-toast{white-space:nowrap;font-size:12px;padding:10px 18px;max-width:92vw;overflow:hidden;text-overflow:ellipsis;}
+.kb-fab{width:40px;height:40px;top:auto;bottom:96px;right:12px;font-size:13px;}
+.modal{border-radius:22px;}
+.kcard,.frag-modal{padding:24px 18px;}
+.end-modal{padding:28px 18px;}
+.splash-pieces{gap:26px;margin-bottom:28px;}
+.sp-piece{width:72px;}
+
+/* ============================================================
+   果冻键帽棋盘（覆盖层）
+   ============================================================ */
+.scene{align-items:flex-start;padding-top:0;}
+.app{justify-content:flex-start;}
+
+.tile{
+  position:relative;width:100%;height:100%;
+  background:none;border:none;box-shadow:none;overflow:visible;
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
+}
+.tile::before{
+  content:attr(data-num);position:absolute;top:-1px;left:1px;z-index:3;
+  font-size:9px;font-weight:500;color:var(--ink-35);
+}
+.keycap{
+  position:relative;width:90%;aspect-ratio:1;flex-shrink:0;
+  background-size:contain;background-position:center;background-repeat:no-repeat;
+  filter:drop-shadow(0 8px 10px rgba(70,85,110,.28));
+  transition:transform .2s var(--ease);
+}
+.tile.start .keycap{background-image:url('assets/keys/start.png');}
+.tile.debate .keycap{background-image:url('assets/keys/debate.png');}
+.tile.knowledge .keycap{background-image:url('assets/keys/knowledge.png');}
+.tile.mystery .keycap{background-image:url('assets/keys/mystery.png');}
+.tile.trap .keycap{background-image:url('assets/keys/trap.png');}
+.tile.item .keycap{background-image:url('assets/keys/item.png');}
+.tile.finish .keycap{background-image:url('assets/keys/finish.png');
+  filter:drop-shadow(0 10px 16px rgba(220,160,40,.5));}
+.tile.finish::after{
+  content:'';position:absolute;top:44%;left:50%;width:104%;aspect-ratio:1;
+  transform:translate(-50%,-50%);border-radius:50%;
+  border:1.5px dashed rgba(220,160,40,.65);
+  animation:spinRing 14s linear infinite;pointer-events:none;
+}
+.t-key{
+  position:absolute;top:37%;left:50%;transform:translate(-50%,-50%);z-index:2;
+  font-size:15px;font-weight:700;color:#2d2d2d;pointer-events:none;
+  text-shadow:0 1px 2px rgba(255,255,255,.95),0 0 8px rgba(255,255,255,.85);
+}
+.t-place{
+  margin-top:-4px;font-size:10.5px;font-weight:500;letter-spacing:.16em;text-indent:.16em;
+  color:#2d2d2d;background:rgba(255,255,255,.55);border:1px solid rgba(255,255,255,.75);
+  border-radius:999px;padding:2px 10px;white-space:nowrap;
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  box-shadow:0 3px 10px rgba(70,85,110,.12);
+}
+.tile.spring{z-index:10;box-shadow:none;}
+.tile.spring .keycap{animation:jelly .8s cubic-bezier(.34,1.56,.64,1);}
+@keyframes jelly{
+  0%{transform:scale(1,1);}
+  22%{transform:scale(.8,1.22);}
+  44%{transform:scale(1.16,.84);}
+  62%{transform:scale(.94,1.08);}
+  78%{transform:scale(1.04,.97);}
+  100%{transform:scale(1,1);}
+}
+.piece.landed svg{animation:jelly .8s cubic-bezier(.34,1.56,.64,1);}
+
+/* 顶栏：知识库主按钮 */
+.kb-pill{
+  font-family:inherit;font-size:12px;font-weight:500;letter-spacing:.18em;text-indent:.18em;
+  padding:9px 18px;border-radius:999px;cursor:pointer;flex-shrink:0;
+  background:#2d2d2d;color:#f2f3f5;border:none;
+  box-shadow:0 6px 16px rgba(45,45,45,.25);
+  transition:transform .18s var(--ease),box-shadow .18s var(--ease);
+}
+.kb-pill:hover{transform:translateY(-1px);}
+.kb-pill:active{transform:scale(.95);}
+.kb-fab{display:none !important;}
+
+/* 手记：角落彩蛋按钮 */
+.frag-fab{
+  position:fixed;left:14px;bottom:16px;width:38px;height:38px;border-radius:50%;
+  border:1px solid rgba(255,255,255,.6);background:rgba(255,255,255,.32);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  font-family:inherit;font-size:14px;color:var(--ink-60);cursor:pointer;z-index:50;
+  opacity:.65;display:flex;align-items:center;justify-content:center;padding:0;
+  transition:opacity .2s,transform .2s;
+}
+.frag-fab:hover{opacity:1;transform:translateY(-2px);}
+.frag-fab .frag-badge{
+  position:absolute;top:-4px;right:-4px;min-width:15px;height:15px;padding:0 4px;
+  background:var(--iri);color:#2d2d2d;font-size:9px;font-weight:700;
+  border-radius:8px;border:1.5px solid #fff;
+  display:flex;align-items:center;justify-content:center;
+}
+.tile::before{font-size:7.5px;}
+.t-key{font-size:11px;}
+.t-place{font-size:8.5px;padding:1px 7px;letter-spacing:.1em;text-indent:.1em;}
+.kb-pill{font-size:11px;padding:7px 13px;}
+
+/* ============================================================
+   花瓣标 & 开场动画
+   ============================================================ */
+.petal-logo{width:210px;margin-bottom:8px;}
+.petal-logo svg{width:100%;height:auto;display:block;overflow:visible;}
+.pb{transform-origin:200px 400px;opacity:0;
+  animation:bloomIn 1.5s var(--ease) forwards, sway 7s ease-in-out infinite alternate;}
+.pb1{animation-delay:.05s,1.7s;}
+.pb2{animation-delay:.4s,1.9s;}
+.pb3{animation-delay:.75s,2.1s;}
+@keyframes bloomIn{from{opacity:0;transform:scale(.3)}to{opacity:1;transform:scale(1)}}
+@keyframes sway{from{transform:rotate(-1.8deg)}to{transform:rotate(1.8deg)}}
+.sq{animation:bob 3.2s ease-in-out infinite;}
+.sq2{animation-delay:.9s;}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
+.petal-logo.small{width:84px;margin:0 auto 14px;}
+.petal-logo.small .pb{animation:none;opacity:1;}
+.petal-logo.small .sq{animation-duration:2.4s;}
+
+/* 匹配弹窗 */
+.match-modal{padding:30px 24px 28px;text-align:center;}
+.match-text{font-size:15px;font-weight:700;letter-spacing:.15em;text-indent:.15em;color:var(--ink);margin-bottom:6px;}
+.match-sub{font-size:11.5px;color:var(--ink-60);letter-spacing:.12em;line-height:1.8;}
+.match-ring{width:84px;margin:0 auto 14px;position:relative;}
+.match-ring::after{content:'';position:absolute;inset:-14px;border-radius:50%;
+  border:1.5px dashed rgba(45,45,45,.25);animation:spinRing 5s linear infinite;}
+
+/* 手记：四分之一圆扇形角标 */
+.frag-fab{
+  left:0 !important;bottom:0 !important;width:76px;height:76px;
+  border-radius:0 100% 0 0 !important;opacity:.9;
+  background:linear-gradient(135deg,rgba(255,255,255,.15),rgba(255,255,255,.5)) !important;
+  border:1px solid rgba(255,255,255,.7) !important;
+  border-left:none !important;border-bottom:none !important;
+  align-items:flex-start !important;justify-content:flex-start !important;
+  padding:16px 0 0 16px !important;font-size:16px !important;
+  animation:fragBreathe 3.6s ease-in-out infinite;
+}
+@keyframes fragBreathe{
+  0%,100%{box-shadow:0 0 0 0 rgba(201,167,255,.0),inset 0 0 0 0 rgba(255,255,255,0);}
+  50%{box-shadow:6px -6px 24px 0 rgba(201,167,255,.35),inset 0 0 18px 0 rgba(255,255,255,.5);}
+}
+.frag-fab.pulse{animation:fragPulse .9s var(--ease) 3;}
+@keyframes fragPulse{0%{transform:scale(1)}40%{transform:scale(1.14)}100%{transform:scale(1)}}
+.frag-fab .frag-badge{top:10px !important;right:auto !important;left:44px;}
+
+/* 棋盘：垂直居中 + 近大远小 */
+.scene{align-items:center;padding-bottom:56px;}
+.app{justify-content:flex-start;}
+
+/* 模式选择三列自适应 */
+.mode-grid{grid-template-columns:repeat(auto-fit,minmax(130px,1fr)) !important;}
+
+.petal-logo{width:160px;}
+.frag-fab{width:66px;height:66px;padding:14px 0 0 14px !important;font-size:14px !important;}
+.frag-fab .frag-badge{left:38px;top:8px;}
+
+/* ============================================================
+   开场全景线稿动画
+   ============================================================ */
+#introStage{
+  position:fixed;inset:0;z-index:600;background:#ffffff;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;
+  transition:opacity .7s var(--ease);cursor:pointer;
+}
+#introStage.done{opacity:0;pointer-events:none;}
+.splash-logo{
+  display:block;width:min(60vw,300px);max-width:300px;height:auto;
+  opacity:0;animation:logoFadeIn .9s var(--ease) .1s forwards;
+}
+.splash-hint{font-size:12px;letter-spacing:.2em;color:var(--ink-35);}
+@keyframes logoFadeIn{to{opacity:1;}}
+@media(prefers-reduced-motion:reduce){
+  .splash-logo{opacity:1;animation:none;}
+  #introStage{transition:none;}
+}
+
+/* 首页双入口 */
+.home-btns{display:flex;flex-direction:column;gap:14px;align-items:center;}
+.home-sub-btn{
+  font-family:inherit;font-size:13px;font-weight:500;letter-spacing:.3em;text-indent:.3em;
+  padding:13px 40px;background:rgba(255,255,255,.5);color:var(--ink);
+  border:1px solid rgba(255,255,255,.85);border-radius:999px;cursor:pointer;
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  transition:transform .2s var(--ease),background .2s;
+}
+.home-sub-btn:hover{transform:translateY(-2px);background:rgba(255,255,255,.8);}
+
+/* 到达码头 */
+.arrival-img{width:100%;border-radius:16px;border:1px solid rgba(255,255,255,.8);
+  margin-bottom:16px;background:#fff;}
+.arrival-title{font-size:19px;font-weight:700;letter-spacing:.2em;text-indent:.2em;margin-bottom:6px;}
+.arrival-sub{font-size:12.5px;color:var(--ink-60);letter-spacing:.1em;margin-bottom:18px;}
+
+/* 翻书笔记 */
+.book-wrap{position:relative;padding:6px 4px 0;}
+.book{
+  position:relative;background:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.85);
+  border-radius:18px;min-height:300px;padding:22px 20px;overflow:hidden;
+  box-shadow:0 16px 40px rgba(60,70,95,.16);
+}
+.book::before{content:'';position:absolute;left:50%;top:0;bottom:0;width:1px;
+  background:linear-gradient(rgba(45,45,45,0),rgba(45,45,45,.14),rgba(45,45,45,0));}
+.leaf{
+  position:absolute;top:0;right:0;width:50%;height:100%;
+  background:linear-gradient(100deg,rgba(255,255,255,.95),rgba(240,242,246,.9));
+  border-left:1px solid rgba(45,45,45,.08);border-radius:0 18px 18px 0;
+  transform-origin:left center;transition:transform .7s var(--ease);
+  backface-visibility:hidden;pointer-events:none;
+}
+.leaf.flipped{transform:rotateY(-180deg);}
+.book-hand{
+  font-family:"Zhi Mang Xing","Noto Sans SC",sans-serif;font-size:22px;color:#4a4a45;
+  cursor:pointer;display:inline-block;padding:4px 10px;border-bottom:2px solid transparent;
+  transition:border-color .2s;background:none;border-top:none;border-left:none;border-right:none;
+}
+.book-hand:hover{border-color:#8a8a80;}
+.book-hand.on{border-color:#2d2d2d;}
+.sticky-card{
+  position:absolute;right:-8px;top:56px;width:86px;padding:10px 8px;
+  background:linear-gradient(160deg,#fff6c9,#ffef9e);
+  border-radius:4px 4px 10px 4px;transform:rotate(4deg);
+  box-shadow:0 6px 14px rgba(60,60,30,.2);
+  font-size:11px;color:#6b6428;line-height:1.6;cursor:pointer;text-align:center;
+  transition:transform .2s var(--ease);
+}
+.sticky-card:hover{transform:rotate(1deg) scale(1.05);}
+.sticky-card::before{content:'';position:absolute;top:-6px;left:50%;transform:translateX(-50%) rotate(-2deg);
+  width:34px;height:12px;background:rgba(255,255,255,.6);border:1px solid rgba(0,0,0,.06);}
+.book-body{font-size:13px;line-height:1.9;color:#3d3d3d;max-height:280px;overflow-y:auto;margin-top:10px;}
+.book-body .j-item{padding:8px 0;border-bottom:1px dashed rgba(45,45,45,.12);}
+.book-body .j-meta{font-size:10.5px;color:var(--ink-35);letter-spacing:.08em;}
+.book-kb-link{
+  display:inline-block;margin-top:14px;font-size:11.5px;letter-spacing:.15em;
+  color:#4a72c4;background:none;border:none;font-family:inherit;cursor:pointer;
+  border-bottom:1px dashed rgba(74,114,196,.5);padding-bottom:1px;
+}
+</style>
+<script>
+/* 演示环境不启用 Service Worker，避免旧缓存导致看到过期页面 */
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.getRegistrations()
+    .then(rs=>rs.forEach(r=>r.unregister()))
+    .catch(()=>{});
+  if(window.caches){
+    caches.keys().then(ks=>ks.forEach(k=>caches.delete(k))).catch(()=>{});
+  }
+}
+</script>
+</head>
+<body>
+<div class="bg-fx"><div class="aurora a1"></div><div class="aurora a2"></div><div class="aurora a3"></div><svg class="geo" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" fill="none"><circle cx="180" cy="140" r="330" stroke="rgba(45,45,45,.14)" stroke-width="1"/><circle cx="1290" cy="720" r="420" stroke="rgba(45,45,45,.12)" stroke-width="1"/><circle cx="1290" cy="720" r="250" stroke="rgba(45,45,45,.1)" stroke-width="1" stroke-dasharray="2 8"/><circle cx="720" cy="450" r="540" stroke="rgba(255,255,255,.35)" stroke-width="1" stroke-dasharray="1 10"/><line x1="0" y1="760" x2="1440" y2="120" stroke="rgba(45,45,45,.08)" stroke-width="1"/><circle cx="180" cy="140" r="6" fill="rgba(45,45,45,.25)"/><circle cx="1290" cy="720" r="6" fill="rgba(45,45,45,.22)"/></svg></div>
+<div id="introStage" role="button" tabindex="0" aria-label="点击任意位置开始游戏">
+  <img class="splash-logo" src="assets/logo/logo-earbian.png" alt="耳辩">
+  <span class="splash-hint">点击任意位置开始</span>
+</div>
+
+<div class="splash" id="splash">
+  <div class="petal-logo"><svg viewBox="0 0 400 420" xmlns="http://www.w3.org/2000/svg">
+    <defs><linearGradient id="tealG" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#22c3d6"/><stop offset="1" stop-color="#3aa655"/>
+    </linearGradient></defs>
+    <g style="mix-blend-mode:multiply">
+      <g class="pb pb1"><ellipse cx="160" cy="245" rx="72" ry="155" fill="#f3b7c8" opacity=".6" transform="rotate(-16 160 245)"/></g>
+      <g class="pb pb2"><ellipse cx="205" cy="228" rx="52" ry="145" fill="url(#tealG)" opacity=".68"/></g>
+      <g class="pb pb3"><ellipse cx="250" cy="248" rx="78" ry="145" fill="#fbae17" opacity=".62" transform="rotate(15 250 248)"/></g>
+    </g>
+    <rect class="sq sq1" x="188" y="58" width="32" height="32" rx="3" fill="#bcd9f7" stroke="#1e46c8" stroke-width="6"/>
+    <rect class="sq sq2" x="244" y="88" width="36" height="36" rx="3" fill="#f6c6ea" stroke="#f08c1e" stroke-width="6"/>
+  </svg></div>
+  <div class="splash-title">耳辩</div>
+  <div class="splash-line"></div>
+  <div class="splash-sub">在你耳边 · 与尔同辩</div>
+  <div class="home-btns"><button class="splash-btn" id="splashBtn">开始游戏</button><button class="home-sub-btn" id="homeKbBtn">全知笔记</button></div>
+</div>
+
+<div class="app" id="app" style="display:none;">
+  <div class="topbar">
+    <button class="icon-btn" id="homeBtn" title="首页">⌂</button>
+    <div class="hud" id="hud"></div>
+    <button class="icon-btn" id="soundBtn" title="声音">♪</button>
+    <button class="kb-pill" onclick="openDrawer()" title="知识库">全知笔记</button>
+  </div>
+  <div class="scene">
+    <div class="board-wrap">
+      <div class="board" id="board">
+        <svg class="path-svg" id="pathSvg" viewBox="0 0 680 560" preserveAspectRatio="none"></svg>
+        <div id="tileLayer"></div>
+        <div id="pieceLayer"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="dice-wrap" id="diceWrap" style="display:none;">
+  <button class="dice-btn" id="diceBtn">⚄</button>
+  <div class="dice-label">掷骰子</div>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="modal" id="modal"></div>
+</div>
+
+<button class="frag-fab" id="fragFabBtn" title="手记">✎</button>
+<div class="frag-toast" id="fragToast"><span class="frag-dot"></span><span id="fragText">获得碎片</span></div>
+
+<template id="tplP1"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 398.13 588.22"><defs><linearGradient id="glassB" x1="0" y1="0" x2="0.25" y2="1"><stop offset="0" stop-color="#dff1ff" stop-opacity=".95"/><stop offset=".5" stop-color="#3fa9f5" stop-opacity=".88"/><stop offset="1" stop-color="#1c7fd6" stop-opacity=".92"/></linearGradient><style>.p1c1{fill:#0071bc;}.p1c2{fill:#c9dbff;}.p1c5{fill:#7ac943;stroke:#0071bc;stroke-miterlimit:10;}.p1c6{fill:#e6e6e6;stroke:blue;stroke-width:7px;stroke-linecap:round;stroke-linejoin:round;}.p1c7{stroke:#fff;stroke-width:10px;stroke-linecap:round;stroke-linejoin:round;fill:none;}.p1c8{stroke:aqua;stroke-width:7px;stroke-linecap:round;stroke-linejoin:round;fill:none;}.p1c3{fill:blue;}.p1c4{fill:url(#glassB);}</style></defs><g><path class="p1c4" d="m37.99,580.65c-21.09.68-35.72-24.5-24.51-42.46,0,0,122.72-212.54,122.72-212.54,1.5-2.46.37-5.93-2.27-7.05C32.01,276.2,4.39,130.5,84.31,54.09c192.86-172.24,412.74,142.44,184.5,264.43-2.65,1.12-3.76,4.59-2.27,7.05,0,0,122.74,212.6,122.74,212.6,11.17,17.89-3.36,43.21-24.51,42.46,0,0-326.79,0-326.79,0v.02Z"/><path class="p1c3" d="m201.28,10.03c169.82.41,219.91,233.65,65.47,303.95-5.28,2.24-7.52,9.21-4.54,14.11,0,0,122.74,212.6,122.74,212.6,9.18,14.73-2.76,35.59-20.18,34.96,0,0-326.78,0-326.78,0-17.36.55-29.41-20.17-20.18-34.96,0,0,122.72-212.54,122.72-212.54,10.8-17.65-41.02-20.59-71.38-70.69C-2.05,155.06,76.45,7.72,201.27,10.02m0-9.99C21.73-2.89-31,253.51,131.87,323.15c-211.08,354.26-165.74,244.23,232.91,262.51,25.64,0,41.66-27.77,28.84-49.97l-122.74-212.6h0C433.67,253.45,380.71-3.01,201.27.03h0Z"/></g><g><path class="p1c2" d="m304.31,178.32c39.85.13,39.85,70.72,0,70.84-39.85-.13-39.85-70.72,0-70.84Z"/><path class="p1c3" d="m304.31,181.82c35.45.65,35.44,63.19,0,63.84-35.45-.65-35.44-63.19,0-63.84m0-7c-44.43.15-44.43,77.7,0,77.84,44.43-.15,44.43-77.7,0-77.84h0Z"/></g><path class="p1c6" d="m183.64,186.25l-8.05-.03c-6.6.04-10.69,7.21-7.36,12.9l27.85,47.64c3.33,5.7,11.58,5.66,14.85-.08l27.33-47.94c3.27-5.74-.9-12.86-7.5-12.82l-32.14.24"/><path class="p1c8" d="m331.17,571.03v-92.88,92.88Z"/><line class="p1c7" x1="313.67" y1="384.03" x2="313.67" y2="508.03"/><path class="p1c1" d="m203.31,196.65c9.04-.43,9.04,30.44,0,30-9.04.43-9.04-30.44,0-30Z"/><path class="p1c5" d="m302.67,198.41l-5.44,29.1c-.26,1.38.77,2.67,2.18,2.72,2.16-.56,11.7,2.33,11.13-2.24,0,0-3.32-29.42-3.32-29.42-.3-2.64-4.09-2.77-4.55-.16Z"/></svg></template>
+
+<template id="tplP2"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 398.13 588.22"><defs><linearGradient id="glassPk" x1="0" y1="0" x2="0.25" y2="1"><stop offset="0" stop-color="#ffeefa" stop-opacity=".95"/><stop offset=".5" stop-color="#ffaafb" stop-opacity=".9"/><stop offset="1" stop-color="#f06fc0" stop-opacity=".92"/></linearGradient><style>.p2c1{fill:url(#glassPk);}.p2c2{fill:#e6e6e6;}.p2c3{fill:#f7931e;}.p2c4{fill:#ff7bac;}.p2c5{fill:#ff6aec;}.p2c6{fill:#f15a24;}.p2c7{fill:#ff6aec;fill-rule:evenodd;}.p2c9{stroke:#f15a24;fill:#e6e6e6;stroke-width:7px;stroke-linecap:round;stroke-linejoin:round;}.p2c10{stroke:#fff;stroke-width:10px;stroke-linecap:round;stroke-linejoin:round;fill:none;}.p2c11{fill:#ff6aec;stroke:#f7931e;stroke-width:10px;stroke-linecap:round;stroke-linejoin:round;}</style></defs><polygon class="p2c7" points="138.67 316.03 64.67 316.03 65.27 437.03 138.67 316.03"/><g><path class="p2c1" d="m33.35,581.03c-10.23,0-19.39-5.29-24.51-14.16-5.12-8.86-5.12-19.44,0-28.3l122.72-212.54c.71-1.22.86-2.69.43-4.03s-1.42-2.44-2.7-3.02c-27.96-12.62-51.8-32.79-68.93-58.34-17.55-26.17-27.11-56.71-27.66-88.32-.77-44.4,15.91-86.25,46.97-117.85C110.75,22.83,152.29,5.41,196.63,5.41c1.86,0,3.74.03,5.6.09,42.63,1.42,82.48,19.1,112.22,49.78,29.8,30.75,46.22,71.28,46.22,114.12,0,64.31-37.87,123-96.49,149.5-1.29.58-2.27,1.68-2.7,3.02s-.28,2.81.43,4.03l122.74,212.6c5.12,8.86,5.12,19.44,0,28.31-5.12,8.86-14.28,14.15-24.51,14.15H33.35Z"/><path class="p2c3" d="m196.64,10.41c1.79,0,3.62.03,5.42.09,41.33,1.38,79.96,18.52,108.79,48.27,28.9,29.82,44.81,69.11,44.81,110.64,0,31.18-9.02,61.37-26.08,87.29-16.64,25.28-39.97,45.22-67.47,57.66-2.57,1.16-4.53,3.36-5.4,6.05s-.55,5.62.86,8.06l122.74,212.6c4.21,7.3,4.21,16.01,0,23.31-4.21,7.3-11.76,11.65-20.18,11.65H33.35c-8.42,0-15.97-4.36-20.18-11.66-4.21-7.3-4.21-16.01,0-23.3l122.72-212.54c1.41-2.45,1.72-5.38.86-8.07-.87-2.69-2.83-4.89-5.41-6.05-27.11-12.23-50.22-31.79-66.83-56.57-17.01-25.37-26.28-54.98-26.82-85.62-.75-43.04,15.42-83.62,45.53-114.26,14.65-14.9,31.77-26.61,50.89-34.8,19.78-8.47,40.81-12.76,62.52-12.76h0m0-10c-94.16,0-170.58,77.09-168.94,171.99,1.17,67.31,41.68,125.02,99.53,151.13,0,0,0,0,0,0L4.51,536.07c-12.82,22.2,3.21,49.96,28.84,49.96h326.79c25.64,0,41.66-27.76,28.84-49.96l-122.74-212.6s0,0,0,0c58.64-26.52,99.43-85.52,99.43-154.06C365.67,77.98,293.09,3.52,202.4.5c-1.93-.06-3.85-.1-5.77-.1h0Z"/></g><path class="p2c11" d="m168.63,328.01c-.67-1.37-16.55-32.42-51.36-34.96-32.34-2.36-52.05,22-53.6,23.98"/><g><ellipse class="p2c4" cx="81.67" cy="182.11" rx="30.5" ry="35.42"/><path class="p2c6" d="m81.67,150.2c14.89,0,27,14.32,27,31.92s-12.11,31.92-27,31.92-27-14.32-27-31.92,12.11-31.92,27-31.92m0-7c-18.78,0-34,17.42-34,38.92s15.22,38.92,34,38.92,34-17.42,34-38.92-15.22-38.92-34-38.92h0Z"/></g><path class="p2c9" d="m166.17,182.53l-8.05-.07c-6.6,0-10.73,7.15-7.43,12.86l27.59,47.79c3.3,5.72,11.55,5.72,14.85,0l27.59-47.79c3.3-5.72-.83-12.86-7.43-12.86l-32.14.07"/><path class="p2c8" d="m63.17,433.53v-114,114Z"/><line class="p2c10" x1="139.67" y1="328.03" x2="139.67" y2="452.03"/><ellipse class="p2c2" cx="71.67" cy="167.03" rx="7" ry="15"/><path class="p2c5" d="m175.5,182.79l-5.44,29.1c-.26,1.38.77,2.67,2.18,2.72l8.76.32c1.41.05,2.53-1.16,2.37-2.56l-3.32-29.42c-.3-2.63-4.07-2.77-4.55-.17Z"/></svg></template>
+
+<script>
+/* ============================================================
+   音效
+   ============================================================ */
+const audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+let soundOn=true;
+function tone(type){
+  if(!soundOn)return;
+  const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+  o.connect(g);g.connect(audioCtx.destination);
+  const n=audioCtx.currentTime;
+  if(type==="pop"){o.type="sine";o.frequency.setValueAtTime(600,n);o.frequency.exponentialRampToValueAtTime(1000,n+.1);g.gain.setValueAtTime(.15,n);g.gain.exponentialRampToValueAtTime(.001,n+.15);o.start(n);o.stop(n+.15);}
+  else if(type==="ding"){o.type="sine";o.frequency.setValueAtTime(700,n);o.frequency.exponentialRampToValueAtTime(1400,n+.15);g.gain.setValueAtTime(.12,n);g.gain.exponentialRampToValueAtTime(.001,n+.25);o.start(n);o.stop(n+.25);}
+  else if(type==="tick"){o.type="triangle";o.frequency.setValueAtTime(400,n);g.gain.setValueAtTime(.08,n);g.gain.exponentialRampToValueAtTime(.001,n+.06);o.start(n);o.stop(n+.06);}
+  else if(type==="win"){[523,659,784,1047].forEach((f,i)=>{const o2=audioCtx.createOscillator(),g2=audioCtx.createGain();o2.connect(g2);g2.connect(audioCtx.destination);o2.type="sine";o2.frequency.value=f;g2.gain.setValueAtTime(.1,n+i*.1);g2.gain.exponentialRampToValueAtTime(.001,n+i*.1+.2);o2.start(n+i*.1);o2.stop(n+i*.1+.2);});}
+}
+
+/* ============================================================
+   数据
+   ============================================================ */
+const TILES=[
+  {key:"Q",type:"start",place:"渡口",icon:"◉"},
+  {key:"W",type:"debate",place:"候船室",icon:"◇"},
+  {key:"E",type:"knowledge",place:"小卖部",icon:"○"},
+  {key:"R",type:"mystery",place:"公告栏",icon:"△"},
+  {key:"T",type:"trap",place:"棚户区",icon:"✕"},
+  {key:"Y",type:"debate",place:"老码头",icon:"◇"},
+  {key:"U",type:"knowledge",place:"候船室",icon:"○"},
+  {key:"I",type:"item",place:"修桥工地",icon:"□"},
+  {key:"O",type:"mystery",place:"小卖部",icon:"△"},
+  {key:"P",type:"trap",place:"废弃码头",icon:"✕"},
+  {key:"A",type:"knowledge",place:"公告栏",icon:"○"},
+  {key:"S",type:"mystery",place:"棚户区",icon:"△"},
+  {key:"D",type:"debate",place:"修桥工地",icon:"◇"},
+  {key:"F",type:"trap",place:"售票厅",icon:"✕"},
+  {key:"G",type:"knowledge",place:"修桥工地",icon:"○"},
+  {key:"H",type:"item",place:"棚户区",icon:"□"},
+  {key:"J",type:"knowledge",place:"小卖部",icon:"○"},
+  {key:"K",type:"mystery",place:"废弃码头",icon:"△"},
+  {key:"L",type:"debate",place:"公告栏",icon:"◇"},
+  {key:";",type:"finish",place:"老码头",icon:"◎"}
+];
+
+const KNOWLEDGE=[
+  {title:"候船室 · 行李丢了谁担责",body:"候船时行李丢失，别急着自认倒霉。<b>《民法典》第八百二十四条</b>：运输过程中旅客自带物品毁损、灭失，<span class=\"highlight\">承运人有过错的</span>，应当承担赔偿责任；托运物品则实行严格责任。<br><br>口诀：<b>自带物品，过错担责；办了托运，照价来赔</b>。"},
+  {title:"小卖部 · 过期食品的账",body:"买到过期食品，可以主张<b>价款十倍</b>或<b>损失三倍</b>的赔偿金，总额不足<span class=\"highlight\">1000元的，按1000元赔</span>。<br><br>依据<b>《食品安全法》第一百四十八条</b>。口诀：<b>十倍起步，保底一千</b>。"},
+  {title:"公告栏 · 说话的边界",body:"在公告栏指名道姓骂\"黑心商家\"，可能构成<b>名誉侵权</b>。<b>《民法典》第一千零二十四条</b>：民事主体享有名誉权，禁止用侮辱、诽谤等方式侵害他人名誉。<br><br>口诀：<b>摆事实可以，扣帽子不行</b>。"},
+  {title:"修桥工地 · 受伤第一步",body:"工地受伤，先做两件事：<span class=\"highlight\">就医、留证</span>。用人单位应在事故发生之日起<span class=\"highlight\">30日内</span>申请工伤认定；单位不申请的，职工或近亲属可在<b>1年内自行申请</b>。<br><br>口诀：<b>三十日单位报，一年内自己报</b>。"},
+  {title:"售票厅 · 车票丢了怎么办",body:"实名制客票丢失，<b>可以请求承运人挂失补办</b>，承运人不得再次收取票款和其他不合理费用。<b>《民法典》第八百一十五条</b>。<br><br>口诀：<b>实名票丢，免费补办</b>。"},
+  {title:"棚户区 · 被欠薪怎么办",body:"工资被拖欠，三步走：<span class=\"highlight\">先协商 → 打12333投诉 → 申请劳动仲裁（不收费）</span>。<b>《劳动合同法》第三十条</b>：劳动者还可以依法向法院申请支付令。<br><br>口诀：<b>协商、投诉、仲裁，步步不花钱</b>。"},
+  {title:"老码头 · 排污随手拍",body:"发现有人往江里偷排污水，拍照留证，拨打<span class=\"highlight\">12345</span>向生态环境部门举报，查证属实可获得奖励，法律明确保护举报人。<br><br>口诀：<b>排污随手拍，就打12345</b>。"}
+];
+
+const DEBATES = [
+  // ========== 消费纠纷 ==========
+  { category:"消费纠纷", q:"新能源车两天亮故障灯，该退还是该修？",
+    law:"《家用汽车产品修理更换退货责任规定》第十八条",
+    pro:"三包期内严重安全故障，应当退车",
+    con:"已完成维修且不影响使用，可继续使用",
+    egg:"青洏：我爸也遇到过一次，他最后自己修的。" },
+  { category:"消费纠纷", q:"职业索赔人向商家投放异物后索赔，是维权还是敲诈？",
+    law:"《刑法》第二百七十四条",
+    pro:"以举报相威胁索要财物，构成敲诈勒索",
+    con:"消费者有权对问题商品主张赔偿",
+    egg:"桃弁：我以前写过一篇稿子，把这种事叫『维权』。后来删了。" },
+  { category:"消费纠纷", q:"直播带货说『全网最低价』结果不是，谁担责？",
+    law:"《广告法》第四条、第二十八条",
+    pro:"主播与平台应承担虚假宣传责任",
+    con:"消费者应自行比对价格，主播仅作推荐",
+    egg:"青洏：我妈以前在电视购物上买过东西。我爸什么也没说。" },
+  { category:"消费纠纷", q:"89元抽手机盲盒，转账后被拉黑，算诈骗吗？",
+    law:"《刑法》第二百六十六条",
+    pro:"虚构中奖事实非法占有，构成诈骗",
+    con:"盲盒含射幸性质，参与即风险自负",
+    egg:"桃弁：我妈被骗过一次。后来她再也不相信『包中』这两个字了。" },
+  { category:"消费纠纷", q:"超市卖过期食品，是店员疏忽还是企业责任？",
+    law:"《食品安全法》第三十四条、第一百二十四条",
+    pro:"企业应建立临期管理制度，承担主体责任",
+    con:"店员未尽日常检查义务，属个人失职",
+    egg:"青洏：我在小报馆写过一次食堂过期的事。领导没让发。" },
+
+  // ========== 生态环保 ==========
+  { category:"生态环保", q:"餐馆油烟扰民，该停业整改还是限期整改？",
+    law:"《大气污染防治法》第八十一条",
+    pro:"未安装净化设施即违法经营，应当停业",
+    con:"小微商户生存优先，应给限期整改机会",
+    egg:"桃弁：我妈以前的饭馆也被投诉过油烟。她改了三次。" },
+  { category:"生态环保", q:"海水养殖尾水排入保护区，养殖户该不该负全责？",
+    law:"《海洋环境保护法》",
+    pro:"造成保护区污染，应承担全部法律责任",
+    con:"地方产业引导不足，责任应由多方共担",
+    egg:"青洏：小时候我爸带我去过一次海边。那时候海还是蓝的。" },
+  { category:"生态环保", q:"在生态红线内违规采矿，如何平衡发展与保护？",
+    law:"《环境保护法》《矿产资源法》",
+    pro:"红线就是红线，违法采矿必须严肃追责",
+    con:"地方经济压力大，应在整改中找替代路径",
+    egg:"桃弁：修桥的人也是这个逻辑。他们知道桥没用，但还是修。" },
+  { category:"生态环保", q:"钢铁项目违规新增产能，地方该不该一律叫停？",
+    law:"《环境影响评价法》",
+    pro:"产能置换政策不容变通，一律叫停",
+    con:"钢铁是支柱产业，应给过渡期整改",
+    egg:"青洏：我爸以前写过一篇材料，叫《论过渡期》。后来没交。" },
+
+  // ========== 动物保护 ==========
+  { category:"动物保护", q:"小区流浪猫扰民，该集中清理还是科学治理？",
+    law:"《动物防疫法》第三十条",
+    pro:"街道办应组织控制和处置，优先保障居民",
+    con:"应通过绝育、领养等科学方式长期治理",
+    egg:"桃弁：我们小区也吵过这个。后来一个老太太自己掏钱做绝育。" },
+  { category:"动物保护", q:"野猪毁坏庄稼，农户该不该获得补偿？",
+    law:"《野生动物保护法》第十九条",
+    pro:"因保护野生动物造成损失，应由政府补偿",
+    con:"生态保护是公共利益，农户应自行承担",
+    egg:"青洏：我们村以前也有这种事。我爸说，认了吧。" },
+  { category:"动物保护", q:"非法猎捕800只画眉鸟，判十年重不重？",
+    law:"《刑法》第三百四十一条",
+    pro:"数量巨大情节特别严重，十年量刑合理",
+    con:"相比人身伤害类犯罪，量刑偏重",
+    egg:"桃弁：我小时候养过一只鸟。后来它飞走了。我没关窗。" },
+
+  // ========== 食品安全 ==========
+  { category:"食品安全", q:"凉茶店非法添加麻黄，是传统配方还是违法添加？",
+    law:"《食品安全法》第三十四条",
+    pro:"麻黄属药品，不得添加至普通食品",
+    con:"凉茶属传统饮品，应尊重民间配方习惯",
+    egg:"青洏：我以前写过一篇《凉茶不是药》的稿子。没发。" },
+  { category:"食品安全", q:"14万枚过期粽子囤积仓库，该如何处置？",
+    law:"《食品安全法》第三十四条",
+    pro:"必须依法销毁，防止流入市场",
+    con:"优先捐赠或再利用，避免资源浪费",
+    egg:"桃弁：我妈以前在后厨，剩菜从来不舍得扔。" },
+
+  // ========== 产品质量 ==========
+  { category:"产品质量", q:"学生军训服不合格，谁该为学生的健康负责？",
+    law:"《产品质量法》第四十九条",
+    pro:"生产企业和采购单位都应承担责任",
+    con:"采购程序合规即可免责，问题出在生产环节",
+    egg:"青洏：我高中军训服穿了三天就开线了。" },
+  { category:"产品质量", q:"销售不合格灭火器，罚16万够不够？",
+    law:"《产品质量法》第十三条、第四十九条",
+    pro:"涉及生命安全，应当从重处罚",
+    con:"处罚应过罚相当，与违法所得匹配",
+    egg:"桃弁：灭火器这东西，平时没人看。真用的时候才知道。" },
+
+  // ========== 知识产权 ==========
+  { category:"知识产权", q:"销售假冒爱马仕包，责任在商家还是平台？",
+    law:"《商标法》第五十七条",
+    pro:"商家是直接侵权人，应承担全部责任",
+    con:"平台未尽审核义务，应承担连带责任",
+    egg:"青洏：我妈以前买过一个『名牌包』。后来知道是假的。她没退。" },
+
+  // ========== 网络治理 ==========
+  { category:"网络治理", q:"企业数据泄露2400份文件，是黑客攻击还是管理失职？",
+    law:"《数据安全法》",
+    pro:"企业未履行安全保护义务，承担主体责任",
+    con:"黑客攻击属不可抗力，责任应区别认定",
+    egg:"桃弁：我以前上班那家公司，密码全是『123456』。" },
+
+  // ========== 劳动争议 ==========
+  { category:"劳动争议", q:"孕期女职工被调岗降薪，企业该不该担责？",
+    law:"《女职工劳动保护特别规定》",
+    pro:"变相调岗降薪属于违法，应恢复原岗位",
+    con:"企业出于岗位适配调岗，程序合规即可",
+    egg:"青洏：我妈怀我的时候被调到仓库去了。她没说什么。" },
+
+  // ========== 医疗美容 ==========
+  { category:"医疗美容", q:"60岁老人花370万做医美，谁该负责？",
+    law:"《消费者权益保护法》",
+    pro:"医美机构应承担误导消费的责任",
+    con:"消费者是完全民事行为能力人，应自负其责",
+    egg:"桃弁：我外婆从来不照镜子。她说镜子骗人。" }
+];
+// ============================================================
+// 辩题抽取：本局内不重复（内置精选辩题，保证正反方完整）
+// ============================================================
+let usedDebates=new Set();
+function pickDebate(){
+  let pool=DEBATES.filter(x=>!usedDebates.has(x.q));
+  if(pool.length===0){usedDebates.clear();pool=DEBATES;}
+  const d=pool[Math.floor(Math.random()*pool.length)];
+  usedDebates.add(d.q);
+  return d;
+}
+
+const TRAPS=[
+  {title:"大雾停航",body:"江面突然起雾，渡船鸣了两声笛，停在江心不动了。阿婆说：这样的天，五年前也有一次。",effect:"跳过下一回合"},
+  {title:"手稿被风吹散",body:"一阵江风把你包里的手稿吹得满天都是，你追着纸片跑出去老远，一张一张捡回来。",effect:"后退2格"},
+  {title:"追错了方向",body:"你循着一条线索追进巷子，发现那只是一只叼着粽叶的黄狗。方向错了，只能重来。",effect:"停留一回合"}
+];
+
+const ITEMS=[
+  {title:"旧录音笔",body:"桃弁母亲留下的录音笔，还能用。里面存着一段五年前的采访，杂音很重，但人声很清楚。",effect:"下次辩论额外+2分"},
+  {title:"放大镜",body:"阿婆递给你的放大镜，木柄被摩挲得发亮。她说：日期这种事，要凑近了才看得清。",effect:"下次辩论额外+2分"},
+  {title:"记者证",body:"一张旧记者证，照片已经泛黄，单位名称是《江声报》。背面用铅笔写着一行小字。",effect:"立即前进2格"},
+  {title:"旧船票",body:"一张五年前的旧船票，票面上的日期被铅笔圈了又圈，圈痕叠了好几层。",effect:"立即前进3格"}
+];
+
+const FRAGMENTS=[
+  {id:"f1",title:"三个孩子",text:"五年前的端午节后，镇小学三个孩子上吐下泻住进医院。他们都在前一天，吃过阿婆食杂店的粽子。",chance:.15},
+  {id:"f2",title:"对不上的日期",text:"阿婆还留着进货单：粽子是五月二日进的货，包装上的生产日期却印着四月二十八日。日期，是被人往前改过的。",chance:.15},
+  {id:"f3",title:"压下的稿子",text:"青洏的父亲当年写好了报道《一只粽子的来路》，版都排好了，没能见报。他在稿纸背面写了一行字：不是她的错。",chance:.15},
+  {id:"f4",title:"辞退信",text:"桃弁的母亲在食品厂做质检。她说这批货\"日期不对\"，三天后就收到了辞退信。信纸很薄，字印得很重。",chance:.15},
+  {id:"f5",title:"凌晨的货车",text:"看码头的人记得，那辆货车没有牌照，凌晨四点卸的货，天不亮就走了。这样的车，那年来过不止一次。",chance:.1},
+  {id:"f6",title:"阿婆的账本",text:"阿婆现在还开着小卖部。她说：我不懂法，但我知道，粽子不是我做的。账本最后一页，夹着两张没用完的船票。",chance:.1}
+];
+
+/* ============================================================
+   状态
+   ============================================================ */
+let players=[],cur=0,mode="duel",gameOver=false,pos=[],scores=[];
+let collectedFrags=new Set();
+let journal = [];
+const $=s=>document.querySelector(s);
+const P1_SVG=document.getElementById("tplP1").innerHTML;
+const P2_SVG=document.getElementById("tplP2").innerHTML;
+const PK_SVG=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 884.5 1311.2"><defs><radialGradient id="pkG" cx="50%" cy="50%"><stop offset="0" stop-color="#7f47dd"/><stop offset="49%" stop-color="#2aae17"/><stop offset="100%" stop-color="#00b8e9"/></radialGradient></defs><ellipse cx="369" cy="647" rx="35" ry="137" fill="url(#pkG)"/><ellipse cx="587" cy="843" rx="297" ry="293" fill="#fbae17" opacity=".3"/></svg>`;
+
+const sp=document.getElementById("splashPieces");if(sp){sp.innerHTML='<div class="sp-piece p1">'+P1_SVG+'</div><div class="sp-piece p2">'+P2_SVG+'</div>';}
+
+/* ============================================================
+   渲染
+   ============================================================ */
+function renderHUD(){
+  $("#hud").innerHTML=players.map((p,i)=>`<div class="player-chip ${i===cur?"active":""}"><div class="chip-avatar">${p.svg}</div><div class="chip-info"><div class="chip-name">${p.name}</div><div class="chip-score">${scores[i]}<small>分</small></div></div></div>`).join("");
+}
+
+function jit(i){
+  const jx=((i*53)%19)-9, jy=((i*97)%17)-8;
+  const rot=(((i*137)%11)-5)*1.2;
+  let sc=0.92+((i*71)%16)/100;
+  if(i===0||i===TILES.length-1) sc=1.22;
+  return {jx,jy,rot,sc};
+}
+
+function computeLayout(){
+  const W=680,H=560,cols=4,rows=5;
+  const padX=60,padY=45;
+  const availW=W-padX*2,availH=H-padY*2;
+  const stepX=availW/(cols-1),stepY=availH/(rows-1);
+  const layouts=[];
+  for(let i=0;i<TILES.length;i++){
+    const row=Math.floor(i/cols),col=i%cols;
+    const actualCol=row%2===0?col:(cols-1-col);
+    const x=padX+actualCol*stepX;
+    const y=padY+row*stepY;
+    const scale=0.8+row*0.085;
+    layouts.push({x,y,scale});
+  }
+  return layouts;
+}
+const LAYOUT=computeLayout();
+
+function drawPath(){
+  const svg=$("#pathSvg");
+  svg.innerHTML="";
+  let d="M";
+  for(let i=0;i<TILES.length;i++){
+    const lo=LAYOUT[i],j=jit(i);
+    d+=(i===0?"":"L")+(lo.x+j.jx)+","+(lo.y+j.jy);
+  }
+  const pathEl=document.createElementNS("http://www.w3.org/2000/svg","path");
+  pathEl.setAttribute("d",d);
+  pathEl.setAttribute("fill","none");
+  pathEl.setAttribute("stroke","#2d2d2d");
+  pathEl.setAttribute("stroke-width","1.5");
+  pathEl.setAttribute("stroke-dasharray","2,7");
+  pathEl.setAttribute("stroke-linecap","round");
+  pathEl.setAttribute("stroke-opacity",".5");
+  svg.appendChild(pathEl);
+  for(let i=0;i<TILES.length-1;i++){
+    const a=LAYOUT[i],b=LAYOUT[i+1],ja=jit(i),jb=jit(i+1);
+    const mx=(a.x+ja.jx+b.x+jb.jx)/2,my=(a.y+ja.jy+b.y+jb.jy)/2;
+    const ang=Math.atan2(b.y-a.y,b.x-a.x);
+    const arrow=document.createElementNS("http://www.w3.org/2000/svg","polygon");
+    const s=5;
+    arrow.setAttribute("points",`${mx},${my-s} ${mx+s*1.3},${my+s} ${mx-s*1.3},${my+s}`);
+    arrow.setAttribute("fill","#2d2d2d");
+    arrow.setAttribute("transform",`rotate(${ang*180/Math.PI+90},${mx},${my})`);
+    arrow.setAttribute("opacity",".7");
+    svg.appendChild(arrow);
+  }
+  const start=LAYOUT[0];
+  const startCircle=document.createElementNS("http://www.w3.org/2000/svg","circle");
+  startCircle.setAttribute("cx",start.x);startCircle.setAttribute("cy",start.y);
+  startCircle.setAttribute("r","22");startCircle.setAttribute("fill","none");
+  startCircle.setAttribute("stroke","#2d2d2d");startCircle.setAttribute("stroke-width","3");
+  startCircle.setAttribute("stroke-dasharray","4,4");
+  startCircle.setAttribute("opacity",".6");
+  svg.appendChild(startCircle);
+}
+
+function renderBoard(){
+  const board=$("#board"),TW=104,TH=104;
+  TILES.forEach((t,i)=>{
+    const lo=LAYOUT[i];
+    const sx=lo.x/680*100,sy=lo.y/560*100;
+    const sw=TW/680*100,sh=TH/560*100;
+    const wrap=document.createElement("div");wrap.className="twrap";
+    const j=jit(i);
+    wrap.style.left=`calc(${sx}% + ${j.jx}px)`;wrap.style.top=`calc(${sy}% + ${j.jy}px)`;
+    wrap.style.width=`${sw}%`;wrap.style.height=`${sh}%`;
+    wrap.style.transform=`translate(-50%,-50%) scale(${lo.scale*j.sc}) rotate(${j.rot}deg)`;
+    wrap.innerHTML=`<div class="tile ${t.type}" data-i="${i}" data-num="${i+1}"><div class="keycap"></div><div class="t-place">${t.place}</div></div>`;
+    $("#tileLayer").appendChild(wrap);
+  });
+}
+
+function setPiecePos(pIdx,tileIdx){
+  const lo=LAYOUT[tileIdx];
+  const sx=lo.x/680*100,sy=lo.y/560*100;
+  const piece=$("#piece-"+pIdx);if(!piece)return;
+  const offX=pIdx===0?-12:12;
+  piece.style.left=`calc(${sx}% + ${offX}px - 17px)`;
+  piece.style.top=`calc(${sy}% - 42px)`;
+}
+
+function renderPieces(){
+  $("#pieceLayer").innerHTML="";
+  players.forEach((p,i)=>{
+    const el=document.createElement("div");el.className="piece";el.id="piece-"+i;el.innerHTML=p.svg;
+    $("#pieceLayer").appendChild(el);setPiecePos(i,pos[i]);
+  });
+}
+
+/* ============================================================
+   弹窗
+   ============================================================ */
+function openModal(html){$("#modal").innerHTML=html;$("#overlay").classList.add("open");}
+function closeModal(){$("#overlay").classList.remove("open");}
+
+function showKCard(title,body,tag,tagClass,btnText){
+  openModal(`<div class="kcard"><div class="kcard-tag ${tagClass}">${tag}</div><div class="kcard-title">${title}</div><div class="kcard-body">${body}</div><button class="kcard-btn" id="modalBtn">${btnText||"知道了"}</button></div>`);
+  return new Promise(r=>{$("#modalBtn").onclick=()=>{closeModal();setTimeout(r,300);};});
+}
+
+
+/* ============================================================
+   离线裁判：服务器不可用时本地规则判定
+   ============================================================ */
+let offlineMode = false;
+function localJudge(text, d){
+  const t = text.replace(/\s/g,'');
+  const hasLogic = /因为|所以|因此|但是|然而|由于|根据|如果|首先|其次|可见|说明|应当|应该/.test(t);
+  const hasLaw = /《[^》]+》|第.{1,6}条/.test(t);
+  const hasFact = /\d|案例|事实|证据|记录|规定|责任|义务|权利/.test(t);
+  const emotional = /^(就是|对对对|太蠢|随便|无语|哈哈)/.test(t) || t.length < 6;
+  if(emotional){
+    return {valid:false, reason:"发言缺少实质内容，试着说出你的依据。"};
+  }
+  if(!hasLogic && !hasLaw && t.length < 15){
+    return {valid:false, reason:"论证太简单了。用上「因为……所以……」，或者引用相关法条。"};
+  }
+  let damage = 6;
+  let tags = [];
+  if(hasLogic){ damage += 3; tags.push("逻辑论证"); }
+  if(hasLaw){ damage += 4; tags.push("法条引用"); }
+  if(hasFact){ damage += 2; tags.push("事实依据"); }
+  if(t.length > 40){ damage += 1; }
+  damage = Math.min(damage, 15);
+  return {valid:true, type: tags.length ? tags.join(" + ") : "观点陈述", damage:damage,
+          reason:"离线裁判：论证成立" + (tags.length ? "（" + tags.join("、") + "）" : "。")};
+}
+
+/* ============================================================
+   AI 裁判版辩题弹窗
+   ============================================================ */
+async function showAIDebate(pIdx, d) {
+ window.currentDebate = d;
+ window.userChoice = '';
+window.userInputText = '';
+  const lawName=((d.law||'').match(/《(.+?)》/)||[])[1]||'';
+  const lawArt=((d.law||'').match(/第(.+?)条/)||[])[1]||'';
+  const lawQ=lawName+lawArt||(d.law||'').slice(0,6);
+  openModal(`
+    <div class="debate-modal">
+      <div class="debate-bg">${PK_SVG}</div>
+      <div class="debate-content">
+        <div class="debate-header">
+          <h3>${d.category} · ${(d.law||'').replace(/《|》/g,'').slice(0,12)}</h3>
+          <p>用事实和法理说话</p>
+        </div>
+
+        <div class="debate-q">${d.q}</div>
+
+        <div class="debate-sides">
+          <div class="side-pro">
+            <div class="side-label">正 方</div>
+            <div class="side-text">${d.pro}</div>
+          </div>
+          <div class="side-con">
+            <div class="side-label">反 方</div>
+            <div class="side-text">${d.con}</div>
+          </div>
+        </div>
+
+        ${d.egg ? `<div class="debate-egg">${d.egg}</div>` : ''}
+
+        <div style="display:flex;gap:6px;margin-bottom:10px;">
+          <button class="kb-inline-btn" onclick="openDrawer({category: '${d.category}'})">
+            看同类案例
+          </button>
+          <button class="kb-inline-btn" onclick="openDrawer({mode: 'law', q: '${lawQ}'})">
+            查法条
+          </button>
+        </div>
+
+        <textarea class="debate-input" id="argInput" placeholder="输入你的观点。要有事实或法理依据。例如：因为……所以……（Ctrl+Enter 提交）"></textarea>
+        <div class="debate-actions">
+          <button id="submitBtn">发 言</button>
+          <button id="passBtn">让 过</button>
+        </div>
+        <div class="debate-result" id="debRes"></div>
+      </div>
+    </div>
+  `);
+
+
+  return new Promise(resolve=>{
+    let resolved=false;
+    const submitBtn=$("#submitBtn"),passBtn=$("#passBtn"),input=$("#argInput"),resEl=$("#debRes");
+
+    const finish=()=>{
+      if(resolved)return;resolved=true;
+      closeModal();
+      setTimeout(resolve,300);
+    };
+
+    const resetUI=()=>{
+      submitBtn.disabled=false;
+      submitBtn.textContent="发 言";
+      submitBtn.onclick=onSubmit;
+      passBtn.style.display="block";
+      input.disabled=false;
+    };
+
+    const onSubmit=async()=>{
+      const text=input.value.trim();
+      if(!text){input.focus();return;}
+      submitBtn.disabled=true;
+      submitBtn.textContent="AI 裁判判定中…";
+      input.disabled=true;
+
+      try{
+        const res=await fetch('/api/judge',{signal: AbortSignal.timeout(15000),
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({input:text,case_law:d.law})
+        });
+        const data=await res.json();
+
+// ★ 记录到本次小记
+window.userInputText = text;
+window.userChoice = '自由发言';
+journal.push({
+  type: 'debate',
+  category: window.currentDebate ? window.currentDebate.category : '辩题',
+  title: window.currentDebate ? window.currentDebate.q : '',
+  choice: window.userChoice,
+  input: window.userInputText,
+  result: data
+});
+
+        if(data.valid){
+          const gain=Math.max(2,Math.round((data.damage||10)/3));
+          scores[pIdx]+=gain;
+          renderHUD();
+          resEl.innerHTML=`✓ ${data.type||'有效发言'}<br>${data.reason}<br><b style="font-size:16px;">+${gain} 分</b>`;
+          resEl.className="debate-result show ok";
+          tone("win");
+          checkFragment(true);
+          submitBtn.textContent="继 续";
+          submitBtn.disabled=false;
+          submitBtn.onclick=finish;
+          passBtn.style.display="none";
+          input.disabled=true;
+        } else {
+          resEl.innerHTML=`✗ 无效发言<br>${data.reason}<br><span style="font-size:12px;color:#999;">再试一次，或选择让过</span>`;
+          resEl.className="debate-result show ng";
+          tone("pop");
+          resetUI();
+        }
+      }catch(err){
+        // 服务器不可用 → 切换到离线裁判
+        if(!offlineMode){
+          offlineMode = true;
+          const toast=$("#fragToast");
+          $("#fragText").textContent="服务器未连接 · 已切换为离线裁判";
+          toast.classList.add("show");
+          setTimeout(()=>toast.classList.remove("show"),2400);
+        }
+        const data = localJudge(text, d);
+        window.userInputText = text;
+        window.userChoice = '自由发言';
+        journal.push({
+          type: 'debate',
+          category: window.currentDebate ? window.currentDebate.category : '辩题',
+          title: window.currentDebate ? window.currentDebate.q : '',
+          choice: window.userChoice,
+          input: window.userInputText,
+          result: data
+        });
+        if(data.valid){
+          const gain=Math.max(2,Math.round((data.damage||10)/3));
+          scores[pIdx]+=gain;
+          renderHUD();
+          resEl.innerHTML=`✓ ${data.type}<br>${data.reason}<br><b style="font-size:16px;">+${gain} 分</b>`;
+          resEl.className="debate-result show ok";
+          tone("win");
+          checkFragment(true);
+          submitBtn.textContent="继 续";
+          submitBtn.disabled=false;
+          submitBtn.onclick=finish;
+          passBtn.style.display="none";
+          input.disabled=true;
+        } else {
+          resEl.innerHTML=`✗ 无效发言<br>${data.reason}<br><span style="font-size:12px;color:#999;">再试一次，或选择让过</span>`;
+          resEl.className="debate-result show ng";
+          tone("pop");
+          resetUI();
+        }
+      }
+    };
+
+    resetUI();
+    passBtn.onclick=finish;
+    input.addEventListener("keydown",e=>{
+      if(e.key==="Enter"&&(e.ctrlKey||e.metaKey)){e.preventDefault();submitBtn.click();}
+    });
+    setTimeout(()=>input.focus(),350);
+  });
+}
+/* ============================================================
+   碎片
+   ============================================================ */
+function checkFragment(boost){
+  FRAGMENTS.forEach(f=>{
+    if(collectedFrags.has(f.id))return;
+    const c=boost?f.chance*1.5:f.chance;
+    if(Math.random()<c){
+      collectedFrags.add(f.id);
+      const toast=$("#fragToast");$("#fragText").textContent=`获得手记：${f.title}`;
+      toast.classList.add("show");setTimeout(()=>toast.classList.remove("show"),2800);
+      const ff=$("#fragFabBtn");if(ff){ff.classList.remove("pulse");void ff.offsetWidth;ff.classList.add("pulse");}
+      updateFragBadge();
+    }
+  });
+}
+
+function updateFragBadge(){
+  const btn=$("#fragFabBtn");
+  if(!btn)return;
+  let badge=btn.querySelector(".frag-badge");
+  const n=collectedFrags.size;
+  if(n<=0){if(badge)badge.remove();return;}
+  if(!badge){
+    badge=document.createElement("span");
+    badge.className="frag-badge";
+    btn.appendChild(badge);
+  }
+  badge.textContent=n;
+}
+
+function showFragments(){
+  const collected=[...collectedFrags];
+  const total=FRAGMENTS.length;
+  const isComplete=collected.length>=total;
+
+  const dots=FRAGMENTS.map(f=>`<div class="dot ${collectedFrags.has(f.id)?"on":""}"></div>`).join("");
+
+  const items=FRAGMENTS.map(f=>{
+    const has=collectedFrags.has(f.id);
+    return `<div class="frag-item ${has?"":"locked"}">
+      <div class="frag-head">${has?"◈":"·"} ${has?f.title:"？？？"}</div>
+      <div class="frag-body">${has?f.text:"还没找到这一页。继续走，继续问。"}</div>
+    </div>`;
+  }).join("");
+
+  const note=isComplete
+    ? `<div style="text-align:center;font-size:14px;font-weight:900;color:#6a4fc9;margin-bottom:16px;line-height:1.7;">六页手记，拼出了五年前的真相。<br><span style="font-size:12px;font-weight:600;color:#888;">涂改生产日期的是厂家，压货的是批发商，阿婆只是最后一环。<br>父亲没发出去的稿子、母亲没递出的证词，如今由你们写完了。</span></div>`
+    : "";
+
+  openModal(`
+    <div class="frag-modal">
+      <div class="frag-title">手 记</div>
+      <div class="frag-sub">渡口旧事 · ${collected.length} / ${total} 页</div>
+      <div class="frag-progress">${dots}</div>
+      ${note}
+      <div class="frag-list">${items}</div>
+      <button class="kcard-btn" id="fragCloseBtn" style="width:100%;">合 上</button>
+    </div>
+  `);
+  $("#fragCloseBtn").onclick=()=>closeModal();
+}
+
+/* ============================================================
+   骰子与移动
+   ============================================================ */
+async function rollDice(){
+  if(gameOver)return;
+  if(mode==="solo"&&players[cur]&&players[cur].ai&&!autoTurn)return;
+  autoTurn=false;
+  const btn=$("#diceBtn");btn.disabled=true;
+  btn.classList.add("shake");tone("ding");
+  await new Promise(r=>setTimeout(r,400));
+  btn.classList.remove("shake");
+  const steps=Math.floor(Math.random()*6)+1;
+  btn.textContent=steps;
+  await hop(cur,steps);
+  btn.textContent="⚄";btn.disabled=false;
+}
+
+async function hop(pIdx,steps){
+  for(let i=0;i<steps;i++){
+    if(pos[pIdx]<TILES.length-1){
+      pos[pIdx]++;
+      setPiecePos(pIdx,pos[pIdx]);
+      tone("tick");
+      await new Promise(r=>setTimeout(r,280));
+    }
+  }
+  await onLandTile(pIdx);
+}
+
+async function onLandTile(pIdx){
+  const t=TILES[pos[pIdx]];
+  const tileEl=$("#tileLayer").children[pos[pIdx]].querySelector(".tile");
+  tileEl.classList.add("spring");setTimeout(()=>tileEl.classList.remove("spring"),900);
+  const pcEl=$("#piece-"+pIdx);if(pcEl){pcEl.classList.add("landed");setTimeout(()=>pcEl.classList.remove("landed"),900);}
+  tone("pop");
+  checkFragment(false);
+
+  if(players[pIdx].ai){
+    await aiTile(pIdx,t);
+    if(!gameOver){cur=(cur+1)%players.length;renderHUD();}
+    return;
+  }
+
+  if(t.type==="knowledge"){
+    const k=KNOWLEDGE[Math.floor(Math.random()*KNOWLEDGE.length)];
+    await showKCard(k.title,k.body,"知识卡片","know");
+    scores[pIdx]+=2;renderHUD();
+    journal.push({type:"knowledge",category:"知识",title:k.title});
+  } else if(t.type==="debate"){
+    const d=pickDebate();
+    await showAIDebate(pIdx,d);
+  } else if(t.type==="trap"){
+    const tr=TRAPS[Math.floor(Math.random()*TRAPS.length)];
+    await showKCard(tr.title,tr.body+"<br><br><b>效果：</b>"+tr.effect,"事件","trap","倒霉");
+    journal.push({type:"trap",category:"事件",title:tr.title});
+  } else if(t.type==="item"){
+    const it=ITEMS[Math.floor(Math.random()*ITEMS.length)];
+    await showKCard(it.title,it.body+"<br><br><b>效果：</b>"+it.effect,"获得道具","item","收下");
+    journal.push({type:"item",category:"道具",title:it.title});
+  } else if(t.type==="finish"){
+    return showArrival();
+  }
+  cur=(cur+1)%players.length;
+  renderHUD();
+  maybeAutoTurn();
+}
+
+/* ============================================================
+   结局
+   ============================================================ */
+function showJournal(){
+  const icons = { debate:'◇', knowledge:'○', trap:'✕', item:'□' };
+  const items = journal.map((j, i) => {
+    if(j.type === 'debate'){
+      let judgeLine = '';
+      if(j.result){
+        const color = j.result.valid ? '#0b8a63' : '#c23367';
+        judgeLine = `<div style="margin-top:6px;font-size:12px;color:${color};font-weight:700;">
+          ${j.result.valid ? '✓ ' + j.result.type : '✗ 无效'} · ${j.result.reason || ''}
+        </div>`;
+      }
+      return `<div style="padding:12px;background:rgba(255,255,255,.55);border-radius:14px;border-left:3px solid #6a8dff;margin-bottom:10px;">
+        <div style="font-size:11px;color:#94A3B8;margin-bottom:4px;">${icons[j.type]} 第 ${i+1} 格 · ${j.category}</div>
+        <div style="font-weight:800;font-size:13px;margin-bottom:4px;">${j.title}</div>
+        <div style="font-size:12px;color:#475569;">你的选择：<b>${j.choice}</b>${j.input ? '「' + j.input + '」' : ''}</div>
+        ${judgeLine}
+      </div>`;
+    }
+    return `<div style="padding:10px 12px;background:rgba(255,255,255,.4);border-radius:14px;margin-bottom:8px;font-size:12.5px;">
+      <span style="color:#94A3B8;font-size:11px;">${icons[j.type]} 第 ${i+1} 格</span>
+      <b style="margin-left:6px;">${j.title}</b>
+    </div>`;
+  }).join('');
+
+  const totalDebates = journal.filter(j => j.type === 'debate').length;
+  const validCount = journal.filter(j => j.type === 'debate' && j.result && j.result.valid).length;
+
+  openModal(`
+    <div class="end-modal" style="max-height:80vh;overflow-y:auto;">
+      <h2 style="font-size:20px;">本次小记</h2>
+      <div class="end-sub" style="margin-bottom:14px;">
+        共 ${journal.length} 格 · ${totalDebates} 次辩题 · ${validCount} 次有效发言
+      </div>
+      <div style="text-align:left;padding:0 4px;">
+        ${items || '<div style="text-align:center;color:#94A3B8;padding:20px;">这一局什么都没记下</div>'}
+      </div>
+      <button class="kcard-btn" onclick="closeModal()" style="width:100%;margin-top:16px;">合 上</button>
+    </div>
+  `);
+}
+
+/* ============================================================
+   到达码头 & 翻书笔记
+   ============================================================ */
+function showArrival(){
+  openModal(`<div class="kcard" style="padding:24px 20px;">
+    <img class="arrival-img" src="assets/arrival.png" alt="码头">
+    <div class="arrival-title">已到达码头</div>
+    <div class="arrival-sub">江风收进袖口，这一路的争论都记下来了</div>
+    <div style="display:flex;gap:10px;justify-content:center;">
+      <button class="kcard-btn" id="arrBookBtn" style="flex:1.4;">查看笔记</button>
+      <button class="kcard-btn ghost" id="arrEndBtn" style="flex:1;">直接结算</button>
+    </div>
+  </div>`);
+  $("#arrBookBtn").onclick=()=>{showBook();};
+  $("#arrEndBtn").onclick=()=>{endGame();};
+}
+
+function showBook(tab){
+  tab=tab||"journal";
+  const renderJournal=()=>{
+    if(!journal.length)return '<div style="text-align:center;color:var(--ink-35);padding:30px 0;">这一局什么都没记下</div>';
+    return journal.map((j,i)=>{
+      let extra="";
+      if(j.type==="debate"&&j.result){
+        extra=`<div style="font-size:11.5px;color:${j.result.valid?"#0b8a63":"#c23367"};font-weight:500;margin-top:2px;">${j.result.valid?"✓ "+(j.result.type||"有效"):"✗ 无效"} · ${j.result.reason||""}</div>`;
+      }
+      const inp=j.input?`<div style="font-size:12px;color:#3d3d3d;margin-top:2px;">「${j.input}」</div>`:"";
+      return `<div class="j-item"><div class="j-meta">第 ${i+1} 格 · ${j.category}</div><div style="font-weight:700;font-size:12.5px;">${j.title}</div>${inp}${extra}</div>`;
+    }).join("");
+  };
+  const renderFrags=()=>{
+    return FRAGMENTS.map(f=>{
+      const has=collectedFrags.has(f.id);
+      return `<div class="j-item" style="${has?"":"opacity:.4;"}"><div style="font-weight:700;font-size:12.5px;">${has?f.title:"？？？"}</div><div style="font-size:12px;margin-top:2px;">${has?f.text:"还没找到这一页。继续走，继续问。"}</div></div>`;
+    }).join("");
+  };
+  openModal(`<div class="kcard" style="padding:22px 18px;text-align:left;">
+    <div class="book-wrap">
+      <div class="book">
+        <div style="text-align:center;position:relative;z-index:2;">
+          <button class="book-hand ${tab==="journal"?"on":""}" id="tabJournal">笔记</button>
+        </div>
+        <div class="book-body" id="bookBody">${tab==="journal"?renderJournal():renderFrags()}</div>
+        <div class="leaf" id="leaf"></div>
+      </div>
+      <div class="sticky-card" id="tabFrags">手记<br>${collectedFrags.size} / ${FRAGMENTS.length} 页</div>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;">
+      <button class="book-kb-link" id="bookKbBtn">查全知笔记 →</button>
+      <button class="kcard-btn" id="bookEndBtn" style="padding:12px 34px;font-size:13px;">结 算</button>
+    </div>
+  </div>`);
+  const flip=()=>{const lf=$("#leaf");lf.classList.remove("flipped");void lf.offsetWidth;lf.classList.add("flipped");
+    setTimeout(()=>lf.classList.remove("flipped"),750);};
+  $("#tabJournal").onclick=()=>{flip();$("#tabJournal").classList.add("on");$("#bookBody").innerHTML=renderJournal();};
+  $("#tabFrags").onclick=()=>{flip();$("#tabJournal").classList.remove("on");$("#bookBody").innerHTML=renderFrags();};
+  $("#bookKbBtn").onclick=()=>{openDrawer();};
+  $("#bookEndBtn").onclick=()=>{endGame();};
+}
+
+function endGame(){
+  gameOver=true;
+  $("#diceWrap").style.display="none";
+
+  const finishers=[];
+  players.forEach((p,i)=>{if(pos[i]===TILES.length-1)finishers.push(i);});
+  const winnerIdx=finishers.length>0?finishers[0]:scores.indexOf(Math.max(...scores));
+  const winner=players[winnerIdx];
+  const fragCount=collectedFrags.size;
+  const total=FRAGMENTS.length;
+  const isComplete=fragCount>=total;
+
+  const stoneText=isComplete
+    ? "你们来这里，不是为了过河。<br>——是为了让五年前的粽子，有个说法。"
+    : "你们来这里，不是为了过河。";
+
+  const fragInfo=isComplete
+    ? `六页手记拼出了真相：涂改生产日期的是厂家，压货的是批发商，阿婆只是最后一环。<br>父亲没发出去的稿子、母亲没递出的证词，如今由你们写完了。`
+    : `手记已收集 ${fragCount} / ${total} 页。<br>还有 ${total-fragCount} 页散落在渡口，继续走，继续问。`;
+
+  openModal(`
+    <div class="end-modal">
+      <h2>${winner.name} 先到老码头</h2>
+      <div class="end-sub">渡口不是终点，是一种状态</div>
+      <div class="end-stone"><div class="stone-text">「 ${stoneText} 」</div></div>
+      <div class="end-frag-info">${fragInfo}</div>
+      <div class="end-scores">
+        ${players.map((p,i)=>`<div class="end-p ${i===winnerIdx?"winner":""}"><div class="e-name">${p.name}</div><div class="e-score">${scores[i]}</div></div>`).join("")}
+      </div>
+      <div style="display:flex;gap:10px;justify-content:center;">
+        <button class="kcard-btn ghost" style="flex:1;" onclick="showBook()">本次小记</button>
+        <button class="kcard-btn" onclick="location.reload()" style="flex:1;">再玩一局</button>
+      </div>
+    </div>
+  `);
+
+}
+
+/* ============================================================
+   模式选择 & 初始化
+   ============================================================ */
+function openModeSelect(){
+  $("#splash").classList.add("done");$("#app").style.display="flex";
+  openModal(`<div style="padding:24px;text-align:center;"><h3 style="font-size:22px;font-weight:900;margin-bottom:4px;">选择模式</h3><p style="font-size:13px;color:#888;font-weight:700;margin-bottom:20px;">沿着渡口走一圈 · 学点真法律 · 集齐手记 · 还原五年前的真相</p><div class="mode-grid"><div class="mode-btn" data-mode="solo"><h4>单人匹配</h4><p>系统匹配一位辩手<br>你只操纵青洏</p></div><div class="mode-btn" data-mode="duel"><h4>双人对抗</h4><p>同机轮流操作<br>先到终点且分数高者胜</p></div><div class="mode-btn" data-mode="team"><h4>阵营战 2v2</h4><p>一人代表一队<br>队伍总分高者胜</p></div></div></div>`);
+  $("#modal").querySelectorAll(".mode-btn").forEach(btn=>{
+    btn.onclick=()=>{mode=btn.dataset.mode;closeModal();
+      if(mode==="solo"){startMatchmaking();}else{initGame();}};
+  });
+}
+/* ============================================================
+   单人匹配 & AI 对手
+   ============================================================ */
+let autoTurn=false;
+function startMatchmaking(){
+  openModal(`<div class="match-modal">
+    <div class="match-ring"><div class="petal-logo small" style="width:84px;margin:0;"><svg viewBox="0 0 400 420" xmlns="http://www.w3.org/2000/svg">
+    <defs><linearGradient id="tealG" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#22c3d6"/><stop offset="1" stop-color="#3aa655"/>
+    </linearGradient></defs>
+    <g style="mix-blend-mode:multiply">
+      <g class="pb pb1"><ellipse cx="160" cy="245" rx="72" ry="155" fill="#f3b7c8" opacity=".6" transform="rotate(-16 160 245)"/></g>
+      <g class="pb pb2"><ellipse cx="205" cy="228" rx="52" ry="145" fill="url(#tealG)" opacity=".68"/></g>
+      <g class="pb pb3"><ellipse cx="250" cy="248" rx="78" ry="145" fill="#fbae17" opacity=".62" transform="rotate(15 250 248)"/></g>
+    </g>
+    <rect class="sq sq1" x="188" y="58" width="32" height="32" rx="3" fill="#bcd9f7" stroke="#1e46c8" stroke-width="6"/>
+    <rect class="sq sq2" x="244" y="88" width="36" height="36" rx="3" fill="#f6c6ea" stroke="#f08c1e" stroke-width="6"/>
+  </svg></div></div>
+    <div class="match-text" id="matchText">正在渡口寻找对手</div>
+    <div class="match-sub" id="matchSub">匹配中 …</div>
+  </div>`);
+  tone("tick");
+  setTimeout(()=>{const t=$("#matchText");if(t){t.textContent="匹配成功 · 桃弁 加入棋局";const s2=$("#matchSub");if(s2)s2.textContent="你操纵青洏 · 桃弁 AI 实时对辩";tone("ding");}},2300);
+  setTimeout(()=>{closeModal();setTimeout(initGame,320);},3600);
+}
+function aiToast(msg){
+  const toast=$("#fragToast");$("#fragText").textContent=msg;
+  toast.classList.add("show");setTimeout(()=>toast.classList.remove("show"),2200);
+}
+/* AI 对手发言条：显示桃弁说的话 + 裁判判定 */
+function aiSay(name,line,verdictHtml,ok){
+  let box=$("#aiSayBox");
+  if(!box){
+    box=document.createElement("div");
+    box.id="aiSayBox";box.className="ai-say";
+    box.innerHTML='<div class="ai-say-name"></div><div class="ai-say-text"></div><div class="ai-say-verdict"></div>';
+    document.body.appendChild(box);
+  }
+  box.querySelector(".ai-say-name").textContent=name;
+  box.querySelector(".ai-say-text").textContent=line;
+  box.querySelector(".ai-say-verdict").innerHTML=verdictHtml;
+  box.style.borderColor=ok?"rgba(142,240,210,.45)":"rgba(255,150,150,.42)";
+  box.classList.add("show");
+  clearTimeout(box._hideTimer);
+  box._hideTimer=setTimeout(()=>box.classList.remove("show"),3400);
+}
+/* 网络/接口失败时的本地降级发言，保证能过 localJudge */
+function fallbackOpponentLine(d,stance){
+  const st=(stance==="反方"?(d.con||d.pro):(d.pro||d.con))||"这一方的主张值得重新审视";
+  return "根据"+(d.law||"相关法律规定")+"，"+st+"，所以这一立场在法理上是站得住的。";
+}
+async function aiTile(pIdx,t){
+  const name=players[pIdx].name;
+  if(t.type==="knowledge"){
+    scores[pIdx]+=2;renderHUD();aiToast(name+" 读到一张知识卡片 · +2 分");await new Promise(r=>setTimeout(r,1300));
+  }else if(t.type==="debate"){
+    const d=pickDebate();
+    await new Promise(r=>setTimeout(r,600));
+    const stance=Math.random()<.5?"正方":"反方";
+    const reference=(stance==="反方"?(d.con||d.pro):(d.pro||d.con))||"";
+    let line="",ok=false,gained=0,reason="",judgeType="无效";
+    try{
+      const res=await fetch('/api/solo-turn',{signal:AbortSignal.timeout(25000),
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({question:d.q,law:d.law,category:d.category,stance:stance,reference:reference})
+      });
+      if(!res.ok)throw new Error("HTTP "+res.status);
+      const data=await res.json();
+      if(!data||typeof data.line!=="string"||!data.line.trim())throw new Error("empty line");
+      line=data.line.trim();ok=!!data.valid;reason=data.reason||"";judgeType=data.type||"无效";
+      gained=ok?Math.max(2,Math.round((data.damage||10)/3)):0;
+    }catch(err){
+      /* 接口不可用时降级：本地生成发言 + 本地裁判，保证游戏不卡住 */
+      line=fallbackOpponentLine(d,stance);
+      const lj=localJudge(line,d);
+      ok=!!lj.valid;reason=lj.reason||"";judgeType=lj.type||"无效";
+      gained=ok?Math.max(2,Math.round((lj.damage||10)/3)):0;
+      const ft=$("#fragToast");
+      if(ft){$("#fragText").textContent="AI 裁判暂不可用 · 已切换为本地裁判";ft.classList.add("show");setTimeout(()=>ft.classList.remove("show"),2600);}
+    }
+    if(ok){scores[pIdx]+=gained;renderHUD();}
+    aiSay(name+" · "+stance+" · "+d.category,
+      line,
+      ok?("判定有效 · "+judgeType+" · <b>+"+gained+" 分</b>"+(reason?"<br>"+reason:""))
+        :("判定无效 · <b>+0 分</b>"+(reason?"<br>"+reason:"")),
+      ok);
+    tone(ok?"ding":"pop");
+    checkFragment(ok);
+    journal.push({type:"debate",category:d.category,title:d.q,choice:name+"（AI 辩手·"+stance+"）",input:line,result:{valid:ok,type:judgeType,damage:ok?gained:0,reason:reason}});
+    await new Promise(r=>setTimeout(r,2800));
+  }else if(t.type==="trap"){
+    const tr=TRAPS[Math.floor(Math.random()*TRAPS.length)];
+    aiToast(name+" 遇到「"+tr.title+"」");await new Promise(r=>setTimeout(r,1300));
+  }else if(t.type==="item"){
+    const it=ITEMS[Math.floor(Math.random()*ITEMS.length)];
+    aiToast(name+" 获得「"+it.title+"」");await new Promise(r=>setTimeout(r,1300));
+  }else if(t.type==="finish"){
+    return endGame();
+  }
+}
+function maybeAutoTurn(){
+  if(gameOver||mode!=="solo")return;
+  if(players[cur]&&players[cur].ai){
+    $("#diceBtn").disabled=true;
+    setTimeout(()=>{autoTurn=true;rollDice();},1500);
+  }
+}
+
+function initGame(){
+ journal = [];
+  usedDebates = new Set();
+  players=[
+    {name:"青洏",svg:P1_SVG,team:"red"},
+    {name:"桃弁",svg:P2_SVG,team:"blue",ai:mode==="solo"}
+  ];
+  pos=players.map(()=>0);
+  scores=players.map(()=>0);
+  cur=0;gameOver=false;collectedFrags=new Set();
+  $("#board").innerHTML='<svg class="path-svg" id="pathSvg" viewBox="0 0 680 560" preserveAspectRatio="none"></svg><div id="tileLayer"></div><div id="pieceLayer"></div>';
+  drawPath();renderBoard();renderPieces();renderHUD();updateFragBadge();
+  $("#diceWrap").style.display="flex";
+}
+
+/* ============================================================
+   事件绑定
+   ============================================================ */
+$("#splashBtn").onclick=()=>{if(audioCtx.state==="suspended")audioCtx.resume();openModeSelect();};
+$("#homeBtn").onclick=()=>location.reload();
+$("#soundBtn").onclick=()=>{soundOn=!soundOn;$("#soundBtn").textContent=soundOn?"♪":"—";};
+$("#fragFabBtn").onclick=showFragments;
+$("#diceBtn").onclick=rollDice;
+window.addEventListener("resize",()=>{if(players.length){drawLayoutAndPieces();}});
+
+function drawLayoutAndPieces(){
+  drawPath();
+  players.forEach((_,i)=>setPiecePos(i,pos[i]));
+}
+/* ============================================================
+   知识库抽屉
+   ============================================================ */
+function openDrawer(opts) {
+  opts = opts || {};
+  const params = new URLSearchParams();
+  if (opts.category) params.set('category', opts.category);
+  if (opts.q) params.set('q', opts.q);
+  const base = '/knowledge-base';
+  const url = base + (params.toString() ? '?' + params.toString() : '');
+  document.getElementById('drawerIframe').src = url;
+  document.getElementById('drawer').classList.add('show');
+  document.getElementById('drawerMask').classList.add('show');
+}
+
+function closeDrawer() {
+  document.getElementById('drawer').classList.remove('show');
+  document.getElementById('drawerMask').classList.remove('show');
+  setTimeout(() => {
+    document.getElementById('drawerIframe').src = 'about:blank';
+  }, 400);
+}
+(function(){
+  var st=document.getElementById('introStage');
+  if(!st)return;
+  var finished=false;
+  var fadeOut=function(){
+    if(finished)return;
+    finished=true;
+    st.classList.add('done');
+    setTimeout(function(){st.remove();},750);
+  };
+  var startGame=function(){
+    if(finished)return;
+    fadeOut();
+    if(audioCtx.state==="suspended")audioCtx.resume();
+    openModeSelect();
+  };
+  var timer=setTimeout(fadeOut,2000);
+  st.addEventListener('click',function(){
+    clearTimeout(timer);
+    startGame();
+  });
+  st.addEventListener('keydown',function(event){
+    if(event.key==='Enter'||event.key===' '){
+      event.preventDefault();
+      clearTimeout(timer);
+      startGame();
+    }
+  });
+})();
+$("#homeKbBtn").onclick=function(){openDrawer();};
+</script>
+
+<!-- 侧边抽屉 -->
+<div class="drawer-mask" id="drawerMask" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-header">
+    <div class="drawer-title">全 知 笔 记</div>
+    <button class="drawer-close" onclick="closeDrawer()">✕</button>
+  </div>
+  <div class="drawer-body">
+    <iframe id="drawerIframe" src="about:blank"></iframe>
+  </div>
+</div>
+</body>
+</html>

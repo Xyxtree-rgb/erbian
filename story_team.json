@@ -1,0 +1,21 @@
+{
+  "chapter_id": "team_prologue",
+  "title": "舌战群儒 · 前置剧情",
+  "story_nodes": [
+    {
+      "type": "dialogue",
+      "speaker": "青洏",
+      "text": "诸位今日齐聚于此，且听我一言。"
+    },
+    {
+      "type": "dialogue",
+      "speaker": "桃弁",
+      "text": "既然如此，便让我们在阵营战中见真章。"
+    }
+  ],
+  "opponent": {
+    "name": "群儒阵营",
+    "hp": 100,
+    "rounds": []
+  }
+}

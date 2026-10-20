@@ -1,0 +1,8 @@
+Flask
+Flask-Cors
+aiohttp>=3.8,<4
+edge-tts>=7.2.0
+openai
+python-dotenv
+pywebview
+requests

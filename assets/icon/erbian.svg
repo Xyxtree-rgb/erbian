@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="_图层_2" data-name="图层 2" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 887.5 1334.72">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: none;
+      }
+
+      .cls-1, .cls-2, .cls-3, .cls-4 {
+        stroke-width: 0px;
+      }
+
+      .cls-2 {
+        fill: url(#_紫色_橙色);
+        opacity: .57;
+      }
+
+      .cls-3 {
+        fill: url(#_未命名的渐变_35);
+      }
+
+      .cls-5 {
+        stroke-width: 4px;
+      }
+
+      .cls-5, .cls-6 {
+        fill: #ffaafb;
+        stroke: #f7931e;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      .cls-4 {
+        fill: url(#_紫色_橙色-2);
+        opacity: .8;
+      }
+
+      .cls-7 {
+        clip-path: url(#clippath);
+      }
+
+      .cls-6 {
+        stroke-width: 6px;
+      }
+
+      .cls-8 {
+        fill: #3fa9f5;
+        stroke: blue;
+        stroke-miterlimit: 10;
+        stroke-width: 3px;
+      }
+    </style>
+    <radialGradient id="_未命名的渐变_35" data-name="未命名的渐变 35" cx="842.1" cy="316.08" fx="842.1" fy="316.08" r="95.19" gradientTransform="translate(-579.59 315.2) scale(1.13 1.05)" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#7f47dd"/>
+      <stop offset=".49" stop-color="#2aae17"/>
+      <stop offset="1" stop-color="#00b8e9"/>
+    </radialGradient>
+    <clipPath id="clippath">
+      <ellipse class="cls-1" cx="377.5" cy="671.22" rx="109" ry="171.5"/>
+    </clipPath>
+    <linearGradient id="_紫色_橙色" data-name="紫色, 橙色" x1="240.5" y1="653.94" x2="436.58" y2="653.94" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#7f47dd"/>
+      <stop offset=".52" stop-color="#fbae17"/>
+      <stop offset="1" stop-color="#fbae17"/>
+    </linearGradient>
+    <linearGradient id="_紫色_橙色-2" data-name="紫色, 橙色" x1="-630.58" y1="556.83" x2="-35.58" y2="556.83" gradientTransform="translate(256.92 1399.57) rotate(-180)" xlink:href="#_紫色_橙色"/>
+  </defs>
+  <ellipse class="cls-3" cx="372.47" cy="646.84" rx="35.05" ry="137.45" transform="translate(-22.02 13.19) rotate(-1.97)"/>
+  <g class="cls-7">
+    <path class="cls-2" d="m436.58,853.14c-55.84-61-90.08-143.32-90.08-233.92,0-70.63,20.81-136.24,56.45-190.63-96.42,48.47-162.45,147.2-162.45,261.13,0,72.3,26.61,138.48,70.68,189.58,33.98-13.43,77.27-22.77,125.4-26.16Z"/>
+    <ellipse class="cls-4" cx="590" cy="842.74" rx="297.5" ry="293" transform="translate(-28.63 20.79) rotate(-1.97)"/>
+  </g>
+  <rect class="cls-6" x="426.5" y="510.72" width="34" height="39.58"/>
+  <rect class="cls-5" x="426.5" y="510.72" width="34" height="39.58"/>
+  <rect class="cls-8" x="389.5" y="483.72" width="22" height="22"/>
+</svg>
