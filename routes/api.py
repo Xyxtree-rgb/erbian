@@ -11,7 +11,7 @@ import aiohttp
 import edge_tts
 import requests
 from edge_tts.exceptions import EdgeTTSException
-from flask import Blueprint, Response, current_app, jsonify, request, send_file, send_from_directory
+from flask import Blueprint, Response, current_app, jsonify, redirect, request, send_file, send_from_directory, url_for
 from openai import OpenAIError
 
 from config import resource_path
@@ -144,6 +144,22 @@ with open(resource_path("knowledge_base.json"), "r", encoding="utf-8") as knowle
 @api.route("/index/")
 def index():
     return _send_gzip_file(resource_path("index.html"), "text/html; charset=utf-8")
+
+
+# 审核 / 演示短链：有人点链接进来，不该先看开屏、再自己摸到"选模式"。
+# 这里直接落到「断案」的案件简介——一屏之内能看懂这是个什么东西，
+# 又不会因为 AI 首句还没回来就露出空对话框。
+@api.route("/demo")
+@api.route("/demo/")
+def demo():
+    target = request.args.get("to", "case")
+    allowed = {"case", "mode", "voyage", "intro", "atlas", "dock"}
+    if target not in allowed:
+        target = "case"
+    qs = {"preview": target}
+    if target == "dock":
+        qs["id"] = request.args.get("id", "d_001")
+    return redirect(url_for("api.index", **qs), code=302)
 
 
 @api.route("/story.json")

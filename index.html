@@ -1728,6 +1728,25 @@ body{
   box-shadow:0 30px 80px rgba(55,65,90,.28);
 }
 .case-head{padding:20px 22px 14px;border-bottom:1px solid var(--ink-12);}
+/* 从 /demo 直接进来时，卡片下面补一行出处。
+   必须脱离卡片容器：塞在卡片里会变成"卡片的一部分"，视觉上像排版出错。
+   做法是让它绝对定位到卡片下沿之外，卡片本身保持不动。 */
+.demo-sign{
+  position:absolute;left:50%;transform:translateX(-50%);
+  margin-top:0;width:min(88vw,420px);
+  top:calc(50% + 190px);
+  text-align:center;pointer-events:none;
+  display:flex;flex-direction:column;align-items:center;gap:9px;
+  animation:demoSignIn .7s var(--ease) .22s both;
+}
+.demo-sign-name{
+  font-size:19px;font-weight:300;letter-spacing:.42em;text-indent:.42em;
+  color:var(--ink);opacity:.78;
+}
+.demo-sign-sub{
+  font-size:10.5px;letter-spacing:.14em;color:var(--ink);opacity:.42;line-height:1.7;
+}
+@keyframes demoSignIn{from{opacity:0;transform:translateX(-50%) translateY(8px);}to{opacity:1;transform:translateX(-50%);}}
 .case-title{font-size:16px;font-weight:700;letter-spacing:.15em;margin-bottom:10px;}
 .case-hp-row{display:flex;align-items:center;gap:10px;}
 .case-hp-bar{flex:1;height:10px;border-radius:5px;overflow:hidden;background:rgba(45,45,45,.1);border:1px solid rgba(255,255,255,.7);}
@@ -3025,6 +3044,9 @@ function startCaseMode(){
 
 function showCaseIntro(){
   const c = CASES[caseState.idx];
+  // 只有从 /demo 这种"外人直接点进来"的入口才补一行出处，
+  // 自己从头玩的人不需要被解释这是什么产品
+  const fromDemo = /[?&]preview=case\b/.test(location.search);
   openModal(`
     <div class="case-modal">
       <div class="case-head">
@@ -3036,6 +3058,19 @@ function showCaseIntro(){
       </div>
     </div>
   `);
+  // 落款挂在 overlay 上，不塞进卡片——塞进去就像卡片排版出错了
+  const ov = $("#overlay");
+  if (ov) {
+    const old = ov.querySelector(".demo-sign");
+    if (old) old.remove();
+    if (fromDemo) {
+      const el = document.createElement("div");
+      el.className = "demo-sign";
+      el.innerHTML = '<span class="demo-sign-name">耳辩</span>' +
+        '<span class="demo-sign-sub">在你耳边，与尔同辩 · 一桩案子，一场对峙，一句判词</span>';
+      ov.appendChild(el);
+    }
+  }
 }
 
 function beginCase(){
@@ -3998,7 +4033,12 @@ function renderPieces(){
    弹窗
    ============================================================ */
 function openModal(html){$("#modal").innerHTML=html;$("#overlay").classList.add("open");}
-function closeModal(){$("#overlay").classList.remove("open","mode-select-overlay");$("#modal").classList.remove("mode-select-modal");}
+function closeModal(){
+  $("#overlay").classList.remove("open","mode-select-overlay");
+  $("#modal").classList.remove("mode-select-modal");
+  const sign = document.querySelector("#overlay .demo-sign");
+  if (sign) sign.remove();
+}
 
 function showKCard(title,body,tag,tagClass,btnText){
   openModal(`<div class="kcard"><div class="kcard-tag ${tagClass}">${tag}</div><div class="kcard-title">${title}</div><div class="kcard-body">${body}</div><button class="kcard-btn" id="modalBtn">${btnText||"知道了"}</button></div>`);
@@ -4901,6 +4941,11 @@ document.getElementById("voyageIntroBack").addEventListener("click", () => {
     setTimeout(function () { runCrossing(function () { openAtlas(); }); }, 300);
   } else if (preview === "atlas") {
     setTimeout(openAtlas, 300);
+  } else if (preview === "case") {
+    // /demo 的落点：直接开一桩案子，停在案件简介上。
+    // 不给玩家留"要不要选模式"的岔路，审核的人点进来就看见产品本体。
+    if (!playerRole) storeRole("qinger");
+    setTimeout(function () { $("#splash").classList.add("done"); startCaseMode(); }, 260);
   } else if (preview === "board") {
     if (!playerRole) storeRole("qinger");
     mode = "solo";
