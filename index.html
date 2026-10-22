@@ -2217,10 +2217,12 @@ body.story-open{overflow:hidden;}
 .topbar>.frag-fab:hover{transform:translateY(-1px);background:rgba(255,255,255,.75)!important;}
 .topbar>.frag-fab>img{width:22px;height:22px;}
 .frag-title img{height:36px;display:block;margin:0 auto 10px;background:#fff;border-radius:4px;padding:2px 4px;}
-.story-kb-title-image{height:40px;display:block;margin:0 auto;background:#fff;border-radius:4px;padding:2px 4px;}
-/* 手写标题：改用矢量文字渲染。
-   原先是位图（text_knowledge.jpg / text_journal.jpg），源图本身就是低清放大，
-   粗黑书法体三个字挤在 59×40px 里必然糊成一团。楷体渲染永远清晰、零字节、可随字号缩放。 */
+/* 知识库标题：从 PSD 原始分层稿还原的手写毛笔字（透明底 PNG，@3x 供 56px 显示）。
+   源稿笔迹 803px 高、笔画中位粗 21.6px（占字高 2.7%）——整图缩到 40px 时
+   笔画只剩 1.07px，位图必然糊。故：清噪→修边→加粗 4px→墨色增强，
+   并把显示高度提到 56px，让笔画落到约 2px。还原脚本见 _psd/restore.py。 */
+.story-kb-title-image{height:56px;display:block;margin:0 auto;}
+@media(max-width:640px){.story-kb-title-image{height:46px;}}
 .hand-title{
   display:block;text-align:center;
   font-family:"STXingkai","华文行楷","KaiTi","STKaiti","Kaiti SC","Noto Serif SC",serif;
@@ -3114,7 +3116,7 @@ function restartCase(){
   </section>
   <div class="story-kb-modal" id="storyKnowledgeModal" aria-hidden="true">
     <section class="story-kb-dialog" role="dialog" aria-modal="true" aria-labelledby="storyKnowledgeTitle">
-      <h2 id="storyKnowledgeTitle" aria-label="知识库 · 选择一条作为辩论证据"><span class="hand-title hand-title--lg" aria-hidden="true">知识库</span></h2>
+      <h2 id="storyKnowledgeTitle" aria-label="知识库 · 选择一条作为辩论证据"><img class="story-kb-title-image" src="/assets/icon/text_knowledge.png" alt="知识库"></h2>
       <div class="story-kb-search">
         <input id="storyKnowledgeQuery" type="search" placeholder="搜索关键词，例如：食品安全">
         <button class="story-primary" id="storyKnowledgeSearch">搜索</button>
