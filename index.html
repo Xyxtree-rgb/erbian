@@ -20,6 +20,12 @@
   --ink-35:rgba(41,40,33,.38);
   --ink-12:rgba(41,40,33,.14);
   --blue:#65747a; --pink:#9a7759;
+  /* 两边共有的墨色：断案的水墨柔光与渡口的古风都用它收口。
+     原来渡口那些 var(--gold) 从未定义过，其实一直在取继承色。 */
+  --gold:#5d6b70;            /* 墨青：小标题、时间地点 */
+  --gold-soft:rgba(93,107,112,.55);
+  --gold-deep:#3d4a4f;
+  --seal:#b4553f;            /* 印章红：只留给判词，不参与大面积铺色 */
   --iri:linear-gradient(100deg,#c8b990,#927a52,#e0d5b8);
   --ease:cubic-bezier(.65,0,.35,1);
 }
@@ -468,7 +474,7 @@ body{
   background:radial-gradient(circle at 34% 26%,#fff 0%,#cfe8f0 40%,#e3cfe0 74%,#f6e2ec 100%);
   box-shadow:0 6px 18px rgba(120,120,160,.2),inset 0 0 0 1px rgba(255,255,255,.9);
 }
-.mode-kicker{font-size:10px;letter-spacing:.34em;text-indent:.34em;color:#8a7a58;margin:0 0 10px;}
+.mode-kicker{font-size:10px;letter-spacing:.34em;text-indent:.34em;color:var(--gold);margin:0 0 10px;}
 .mode-title{
   font-family:"KaiTi","STKaiti","Noto Serif SC",serif;font-size:clamp(23px,4.2vw,31px);
   font-weight:600;letter-spacing:.26em;text-indent:.26em;color:#2b2a25;line-height:1.3;margin:0;
@@ -730,7 +736,7 @@ body{
   animation:roleFade .5s var(--ease) both;text-align:center;
 }
 .voyage-kicker{
-  font-size:10px;letter-spacing:.34em;text-indent:.34em;color:#8a7a58;margin-bottom:9px;
+  font-size:10px;letter-spacing:.34em;text-indent:.34em;color:var(--gold);margin-bottom:9px;
 }
 .voyage-title{
   font-family:"KaiTi","STKaiti","Noto Serif SC",serif;font-size:clamp(23px,4vw,31px);
@@ -813,7 +819,7 @@ body{
   box-shadow:6px 6px 0 rgba(26,26,26,.17);
 }
 .voyage-stop.done .stop-card{opacity:.72;}
-.stop-year{display:block;font-size:10px;letter-spacing:.2em;color:#8a7a58;}
+.stop-year{display:block;font-size:10px;letter-spacing:.2em;color:var(--gold);}
 .stop-place{
   display:block;font-family:"KaiTi","STKaiti",serif;font-size:19px;font-weight:600;
   letter-spacing:.12em;color:#2b2a25;margin-top:4px;
@@ -821,11 +827,11 @@ body{
 .stop-line{display:block;font-size:12px;line-height:1.75;color:#77726c;margin-top:5px;}
 .stop-tag{
   display:inline-block;margin-top:9px;padding:2px 10px;border-radius:2px;
-  background:#f6c945;border:1.5px solid #1a1a1a;box-shadow:2px 2px 0 rgba(26,26,26,.8);
+  background:var(--gold-deep);border:1.5px solid #1a1a1a;box-shadow:2px 2px 0 rgba(26,26,26,.8);
   font-family:"KaiTi","STKaiti",serif;font-size:12.5px;letter-spacing:.08em;color:#1a1a1a;
 }
 .stop-go{
-  position:absolute;right:14px;bottom:13px;font-size:11px;letter-spacing:.14em;color:#8a7a58;
+  position:absolute;right:14px;bottom:13px;font-size:11px;letter-spacing:.14em;color:var(--gold);
 }
 .voyage-stop.done .stop-go{color:#4e8a68;}
 .voyage-back{
@@ -867,7 +873,196 @@ body{
 }
 .intro-go:hover{transform:translate(-1px,-2px);box-shadow:6px 6px 0 rgba(26,26,26,.22);}
 .intro-go:active{transform:translate(1px,1px);box-shadow:2px 2px 0 rgba(26,26,26,.2);}
-.voyage-intro{z-index:730;}
+/* ===== 世界观地图（手绘长卷） =====
+   三条河、三座渡口锚在各自岸上。可拖、可缩、可点开。
+   图形全是 SVG 路径，不依赖外部图片，手机上也清晰。 */
+.atlas-mask{
+  position:fixed;inset:0;z-index:760;display:grid;place-items:center;
+  background:rgba(38,44,48,.5);opacity:0;visibility:hidden;
+  transition:opacity .32s var(--ease),visibility .32s;
+}
+.atlas-mask.open{opacity:1;visibility:visible;}
+.atlas{
+  position:relative;width:min(94vw,1040px);height:min(88vh,700px);
+  border-radius:4px;overflow:hidden;background:#faf8f3;
+  border:1px solid rgba(26,26,26,.4);
+  box-shadow:10px 10px 0 rgba(26,26,26,.12),0 30px 70px rgba(30,40,50,.3);
+  transform:scale(.94);transition:transform .32s var(--ease);
+}
+.atlas-mask.open .atlas{transform:scale(1);}
+.atlas-canvas{
+  position:absolute;inset:0;overflow:hidden;cursor:grab;
+  touch-action:none;user-select:none;
+  background:
+    repeating-linear-gradient(90deg,rgba(255,255,255,.92) 0 2px,rgba(247,246,242,.88) 2px 5px),
+    #faf8f3;
+}
+.atlas-canvas.dragging{cursor:grabbing;}
+.atlas-world{
+  position:absolute;left:50%;top:50%;width:1200px;height:800px;
+  transform:translate(-50%,-50%) scale(var(--atlas-scale,1));
+  transform-origin:center center;
+  will-change:transform;
+}
+.atlas-world > svg{position:absolute;inset:0;width:100%;height:100%;}
+.atlas-node{
+  position:absolute;transform:translate(-50%,-50%);
+  display:grid;place-items:center;cursor:pointer;
+  font-family:inherit;background:none;border:0;padding:0;
+}
+.atlas-node .pin{
+  position:relative;width:38px;height:38px;border-radius:50%;
+  display:grid;place-items:center;
+  background:#fffdf9;border:1.5px solid #1a1a1a;
+  box-shadow:2px 2px 0 rgba(26,26,26,.55);
+  transition:transform .2s var(--ease),box-shadow .2s var(--ease);
+}
+.atlas-node:hover .pin,.atlas-node:focus-visible .pin{
+  transform:translate(-1px,-2px);box-shadow:4px 4px 0 rgba(26,26,26,.5);outline:none;
+}
+.atlas-node .pin svg{width:22px;height:22px;}
+.atlas-node[data-state="done"] .pin{background:#e6f0e9;border-color:#3f6b52;}
+.atlas-node[data-state="locked"] .pin{opacity:.62;}
+.atlas-node[data-state="current"] .pin::after{
+  content:"";position:absolute;inset:-7px;border-radius:50%;
+  border:1.5px solid rgba(26,26,26,.45);
+  animation:atlasPulse 2s ease-out infinite;
+}
+@keyframes atlasPulse{
+  0%{transform:scale(.82);opacity:.9;}
+  100%{transform:scale(1.25);opacity:0;}
+}
+.atlas-label{
+  position:absolute;top:44px;white-space:nowrap;pointer-events:none;
+}
+.atlas-label b{
+  display:block;font-family:"KaiTi","STKaiti",serif;font-size:15px;font-weight:600;
+  letter-spacing:.14em;color:#2b2a25;
+}
+.atlas-label span{
+  display:block;margin-top:2px;font-size:10.5px;letter-spacing:.1em;color:var(--gold);
+}
+.atlas-hud{
+  position:absolute;left:0;right:0;top:0;z-index:3;
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:13px 16px;pointer-events:none;
+}
+.atlas-title{
+  font-family:"KaiTi","STKaiti",serif;font-size:19px;font-weight:600;
+  letter-spacing:.28em;color:#2b2a25;pointer-events:none;
+}
+.atlas-title em{
+  display:block;font-family:inherit;font-style:normal;font-size:10px;
+  letter-spacing:.26em;color:var(--gold);margin-top:3px;
+}
+.atlas-tools{display:flex;gap:8px;pointer-events:auto;}
+.atlas-tools button{
+  width:32px;height:32px;display:grid;place-items:center;cursor:pointer;
+  font-size:15px;line-height:1;color:#2b2a25;background:#fffdf9;
+  border:1.5px solid #1a1a1a;border-radius:2px;box-shadow:2px 2px 0 rgba(26,26,26,.5);
+  transition:transform .12s var(--ease),box-shadow .12s var(--ease);
+}
+.atlas-tools button:hover{transform:translate(-1px,-1px);box-shadow:3px 3px 0 rgba(26,26,26,.5);}
+.atlas-tip{
+  position:absolute;left:50%;bottom:12px;transform:translateX(-50%);
+  font-size:11px;letter-spacing:.1em;color:rgba(41,40,33,.5);pointer-events:none;
+}
+.atlas-close{
+  position:absolute;right:14px;bottom:12px;z-index:3;
+  font-family:inherit;font-size:11.5px;letter-spacing:.16em;cursor:pointer;
+  padding:7px 18px;border-radius:2px;color:#fffdf9;background:#1a1a1a;
+  border:1.5px solid #1a1a1a;box-shadow:3px 3px 0 rgba(26,26,26,.2);
+}
+@media (max-width:640px){
+  .atlas{width:100vw;height:100vh;border-radius:0;border:0;box-shadow:none;}
+  .atlas-mask.open .atlas{transform:scale(1);}
+  .atlas-title{font-size:16px;}
+}
+
+/* ---- 穿越转场 ----
+   时间轴：0s 双球起步 → .75s 相撞泛白 → .9s logo 绽开 → 1.5s 水面漫上来 → 2.1s 收尾
+   全部用 transform / opacity，手机上也跑得动。 */
+.crossing{
+  position:fixed;inset:0;z-index:980;pointer-events:none;overflow:hidden;
+  background:#fff;opacity:0;visibility:hidden;transition:opacity .18s ease;
+}
+.crossing.on{opacity:1;visibility:visible;pointer-events:all;}
+.crossing.on.out{opacity:0;transition:opacity .4s ease;}
+.crossing-orb{
+  position:absolute;width:78vmax;height:78vmax;border-radius:50%;
+  filter:blur(2px);will-change:transform,opacity;
+}
+.orb-blue{
+  left:-56vmax;top:-56vmax;
+  background:radial-gradient(circle at 50% 50%,#cfe6f2 0%,#dcecf5 55%,rgba(214,235,246,0) 72%);
+  animation:orbBlue 1000ms cubic-bezier(.6,0,.35,1) forwards;
+}
+.orb-pink{
+  right:-56vmax;bottom:-56vmax;
+  background:radial-gradient(circle at 50% 50%,#f6d3e3 0%,#f9e2ec 55%,rgba(248,224,236,0) 72%);
+  animation:orbPink 1000ms cubic-bezier(.6,0,.35,1) forwards;
+}
+/* 撞上就收：相撞之后两球迅速褪成白，把舞台让给 logo。
+   不收的话双色会一直铺满全屏，白底根本出不来。 */
+@keyframes orbBlue{
+  0%{transform:translate3d(0,0,0) scale(.55);opacity:1;}
+  62%{transform:translate3d(56vmax,56vmax,0) scale(1);opacity:1;}
+  78%{transform:translate3d(56vmax,56vmax,0) scale(1.15);opacity:.55;}
+  100%{transform:translate3d(56vmax,56vmax,0) scale(1.25);opacity:0;}
+}
+@keyframes orbPink{
+  0%{transform:translate3d(0,0,0) scale(.55);opacity:1;}
+  62%{transform:translate3d(-56vmax,-56vmax,0) scale(1);opacity:1;}
+  78%{transform:translate3d(-56vmax,-56vmax,0) scale(1.15);opacity:.55;}
+  100%{transform:translate3d(-56vmax,-56vmax,0) scale(1.25);opacity:0;}
+}
+.crossing-logo{
+  position:absolute;left:50%;top:50%;width:212px;height:318px;margin:-159px 0 0 -106px;
+  opacity:0;will-change:transform,opacity;
+}
+.crossing-logo.on{
+  animation:logoBloom 1100ms cubic-bezier(.22,1,.3,1) forwards;
+}
+@keyframes logoBloom{
+  0%{opacity:0;transform:scale(.2) rotate(-16deg);}
+  55%{opacity:1;transform:scale(1.06) rotate(3deg);}
+  100%{opacity:1;transform:scale(1) rotate(0deg);}
+}
+.cross-kh{fill:rgba(61,74,79,.05);stroke:var(--gold-deep);stroke-width:7;stroke-linecap:round;}
+.cross-seed{fill:rgba(180,85,63,.12);stroke:var(--seal);stroke-width:5.6;}
+.crossing-logo.on .cross-kh{
+  stroke-dasharray:440;stroke-dashoffset:440;
+  animation:khDraw 900ms cubic-bezier(.4,0,.3,1) .18s forwards;
+}
+.crossing-logo.on .cross-seed{
+  stroke-dasharray:95;stroke-dashoffset:95;
+  animation:khDraw 520ms ease-out .82s forwards;
+}
+@keyframes khDraw{to{stroke-dashoffset:0;}}
+.crossing-water{
+  position:absolute;left:-10%;bottom:-24%;width:120%;height:74%;
+  background:
+    linear-gradient(180deg,rgba(255,255,255,0) 0%,rgba(147,166,175,.55) 42%,rgba(93,107,112,.92) 100%);
+  transform:translate3d(0,100%,0);will-change:transform;
+}
+.crossing-water.on{animation:waterRise 900ms cubic-bezier(.4,0,.25,1) forwards;}
+@keyframes waterRise{
+  0%{transform:translate3d(0,100%,0);}
+  100%{transform:translate3d(0,0,0);}
+}
+.crossing-caption{
+  position:absolute;left:50%;bottom:22%;transform:translateX(-50%);
+  font-family:"KaiTi","STKaiti","Noto Serif SC",serif;font-size:15px;
+  letter-spacing:.5em;text-indent:.5em;color:#fffdf9;
+  text-shadow:0 1px 10px rgba(45,58,64,.45);
+  opacity:0;
+}
+.crossing-caption.on{animation:capIn 700ms ease-out .5s forwards;}
+@keyframes capIn{to{opacity:1;}}
+@media (prefers-reduced-motion: reduce){
+  .orb-blue,.orb-pink{animation-duration:200ms;}
+  .crossing-water.on{animation-duration:250ms;}
+}
 
 /* ---- 单个渡口：90 秒跑完 ---- */
 .dock{
@@ -896,7 +1091,7 @@ body{
   display:flex;flex-direction:column;gap:12px;max-height:calc(100vh - 44px);
 }
 .duel-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;}
-.duel-kicker{font-size:10px;letter-spacing:.3em;color:#8a7a58;}
+.duel-kicker{font-size:10px;letter-spacing:.3em;color:var(--gold);}
 .duel-title{font-family:"KaiTi","STKaiti",serif;font-size:24px;color:#2b2a25;letter-spacing:.12em;margin-top:4px;}
 .duel-sub{font-size:12px;color:#7b7671;line-height:1.8;margin-top:6px;}
 .duel-x{
@@ -910,7 +1105,7 @@ body{
   padding:10px 14px;border-radius:8px;background:#fff8ec;border:1px dashed rgba(154,68,52,.55);
 }
 .duel-code b{font-family:ui-monospace,monospace;font-size:22px;letter-spacing:.22em;color:#9a4434;}
-.duel-code small{font-size:11px;color:#8a7a58;letter-spacing:.06em;}
+.duel-code small{font-size:11px;color:var(--gold);letter-spacing:.06em;}
 .duel-hp-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
 .duel-side{padding:9px 12px;border-radius:8px;background:#fffdf9;border:1px solid rgba(26,26,26,.18);}
 .duel-side.active{border-color:#1a1a1a;box-shadow:0 0 0 1.5px #1a1a1a inset;}
@@ -918,15 +1113,15 @@ body{
 .duel-bar{height:6px;border-radius:4px;background:rgba(26,26,26,.1);margin-top:6px;overflow:hidden;}
 .duel-bar i{display:block;height:100%;border-radius:4px;background:linear-gradient(90deg,#9ec9b8,#5fbf8a);transition:width .3s ease;}
 .duel-topic{padding:10px 13px;border-left:3px solid #1a1a1a;font-size:13px;line-height:1.8;color:#2b2a25;background:#fffdf9;}
-.duel-topic em{display:block;font-style:normal;font-size:11px;color:#8a7a58;margin-top:4px;}
+.duel-topic em{display:block;font-style:normal;font-size:11px;color:var(--gold);margin-top:4px;}
 .duel-log{
   flex:1;min-height:150px;max-height:34vh;overflow:auto;display:flex;flex-direction:column;gap:8px;
   padding:4px 2px;
 }
 .duel-line{font-size:13px;line-height:1.75;color:#2b2a25;padding:8px 11px;border-radius:8px;background:#fff;border:1px solid rgba(26,26,26,.12);}
 .duel-line.mine{background:#eef6f2;border-color:rgba(95,191,138,.45);}
-.duel-line.sys{background:transparent;border:0;color:#8a7a58;font-size:12px;text-align:center;padding:2px;}
-.duel-line .nm{display:block;font-size:10.5px;color:#8a7a58;letter-spacing:.1em;margin-bottom:3px;}
+.duel-line.sys{background:transparent;border:0;color:var(--gold);font-size:12px;text-align:center;padding:2px;}
+.duel-line .nm{display:block;font-size:10.5px;color:var(--gold);letter-spacing:.1em;margin-bottom:3px;}
 .duel-line .jd{display:block;margin-top:5px;font-size:11px;color:#7b7671;}
 .duel-line .jd b{font-weight:700;color:#9a4434;}
 .duel-input{display:flex;gap:8px;align-items:flex-end;}
@@ -2001,11 +2196,11 @@ body.story-open{overflow:hidden;}
 .debate-reply-avatar{
   flex:none;display:grid;place-items:center;width:34px;height:34px;border-radius:50%;
   font-family:"KaiTi","STKaiti",serif;font-size:15px;line-height:1;color:#fffdf9;
-  background:linear-gradient(135deg,#8a7a58,#5f5a54);
+  background:linear-gradient(135deg,var(--gold),#5f5a54);
   box-shadow:0 4px 10px rgba(60,50,40,.2);
 }
 .debate-reply-body{flex:1;min-width:0;}
-.debate-reply-name{display:block;font-size:11px;letter-spacing:.22em;color:#8a7a58;margin-bottom:3px;}
+.debate-reply-name{display:block;font-size:11px;letter-spacing:.22em;color:var(--gold);margin-bottom:3px;}
 .debate-reply-text{
   font-family:"Noto Serif SC","Songti SC","Source Han Serif SC",serif;
   font-size:14px;line-height:1.85;color:var(--ink);text-align:justify;
@@ -3162,6 +3357,7 @@ function restartCase(){
     <h2 class="voyage-title">你渡过的人</h2>
     <p class="voyage-progress" id="voyageProgress">已渡 0 / 3</p>
     <button class="voyage-role" id="voyageRole" type="button"></button>
+    <button class="voyage-role" id="voyageAtlasBtn" type="button">看航线图 ›</button>
     <div class="voyage-route" id="voyageRoute"></div>
     <button class="voyage-back" id="voyageBack" type="button">回到选择</button>
   </div>
@@ -3209,6 +3405,121 @@ function restartCase(){
     </div>
     <button class="voyage-back" id="voyageIntroBack" type="button">回到选择</button>
   </div>
+</div>
+
+<!-- 世界观地图：一条竖着的河，三座渡口锚在岸上 -->
+<div class="atlas-mask" id="atlasMask" aria-hidden="true">
+  <div class="atlas" role="dialog" aria-label="渡口航线图">
+    <div class="atlas-canvas" id="atlasCanvas">
+      <div class="atlas-world" id="atlasWorld">
+        <svg viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+          <defs>
+            <linearGradient id="riverGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#e8f2f7"/>
+              <stop offset=".45" stop-color="#cfdfe7"/>
+              <stop offset="1" stop-color="#a8bcc6"/>
+            </linearGradient>
+            <linearGradient id="mistGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="rgba(252,251,247,0)"/>
+              <stop offset=".5" stop-color="rgba(252,251,247,.72)"/>
+              <stop offset="1" stop-color="rgba(252,251,247,0)"/>
+            </linearGradient>
+            <linearGradient id="landGrad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#faf8f3"/>
+              <stop offset="1" stop-color="#f2efe7"/>
+            </linearGradient>
+          </defs>
+          <rect width="1200" height="800" fill="url(#landGrad)"/>
+          <!-- 远山：三层，越远越淡 -->
+          <path d="M0 210 Q 120 130 250 196 T 520 178 T 800 205 T 1060 168 T 1200 200 L1200 0 L0 0 Z"
+                fill="rgba(93,107,112,.09)"/>
+          <path d="M0 268 Q 160 196 330 252 T 660 232 T 980 258 T 1200 240 L1200 0 L0 0 Z"
+                fill="rgba(93,107,112,.06)"/>
+          <!-- 河：从北往南，越走越宽 -->
+          <path d="M508 0 C 470 84, 560 132, 596 190 C 636 254, 500 300, 480 366
+                   C 458 440, 610 452, 634 512 C 656 568, 520 596, 528 660
+                   C 534 716, 588 748, 582 800
+                   L 774 800 C 780 748, 830 716, 836 660 C 844 596, 708 568, 730 512
+                   C 754 452, 906 440, 884 366 C 864 300, 728 254, 768 190
+                   C 804 132, 894 84, 856 0 Z"
+                fill="url(#riverGrad)"/>
+          <!-- 水纹：几笔横向短线 -->
+          <g stroke="rgba(255,255,255,.72)" stroke-width="1.6" stroke-linecap="round" fill="none">
+            <path d="M596 70 q 20 -7 40 0"/><path d="M660 96 q 18 -6 36 0"/>
+            <path d="M630 200 q 20 -7 40 0"/><path d="M540 268 q 19 -6 38 0"/>
+            <path d="M700 330 q 20 -7 40 0"/><path d="M520 400 q 18 -6 36 0"/>
+            <path d="M660 452 q 20 -7 40 0"/><path d="M560 540 q 19 -6 38 0"/>
+            <path d="M700 600 q 18 -6 36 0"/><path d="M600 676 q 20 -7 40 0"/>
+            <path d="M660 740 q 18 -6 36 0"/>
+          </g>
+          <!-- 岸线：两道墨线，手抖一点，不描太齐 -->
+          <g fill="none" stroke="rgba(41,40,33,.34)" stroke-width="1.6" stroke-linecap="round">
+            <path d="M508 0 C 470 84, 560 132, 596 190 C 636 254, 500 300, 480 366
+                     C 458 440, 610 452, 634 512 C 656 568, 520 596, 528 660
+                     C 534 716, 588 748, 582 800"/>
+            <path d="M856 0 C 894 84, 804 132, 768 190 C 728 254, 864 300, 884 366
+                     C 906 440, 754 452, 730 512 C 708 568, 844 596, 836 660
+                     C 830 716, 780 748, 774 800"/>
+          </g>
+          <!-- 支流：两处岔口，让河不是一根直筒 -->
+          <g fill="none" stroke="rgba(93,107,112,.5)" stroke-width="2" stroke-linecap="round">
+            <path d="M556 250 C 480 232, 410 250, 342 232"/>
+            <path d="M784 508 C 860 494, 924 516, 990 500"/>
+          </g>
+          <!-- 两岸村落：几笔屋顶，暗示有人住的岸不是空地 -->
+          <g fill="none" stroke="rgba(41,40,33,.3)" stroke-width="1.3" stroke-linecap="round">
+            <path d="M214 232 l 14 -11 l 14 11 M218 232 v 12 h 20 v -12"/>
+            <path d="M262 246 l 11 -9 l 11 9 M266 246 v 10 h 15 v -10"/>
+            <path d="M180 268 l 10 -8 l 10 8 M184 268 v 9 h 13 v -9"/>
+            <path d="M880 266 l 13 -10 l 13 10 M885 266 v 11 h 18 v -11"/>
+            <path d="M934 288 l 10 -8 l 10 8 M938 288 v 9 h 13 v -9"/>
+            <path d="M846 300 l 12 -10 l 12 10 M851 300 v 10 h 16 v -10"/>
+          </g>
+          <!-- 树：两点几笔，不画细 -->
+          <g fill="none" stroke="rgba(93,107,112,.42)" stroke-width="1.4" stroke-linecap="round">
+            <path d="M330 420 v 20 M322 428 q 8 -14 16 0 M324 438 q 6 -10 12 0"/>
+            <path d="M378 452 v 17 M371 459 q 7 -12 14 0"/>
+            <path d="M760 356 v 19 M752 364 q 8 -13 16 0 M754 374 q 6 -10 12 0"/>
+            <path d="M818 610 v 18 M811 617 q 7 -12 14 0"/>
+            <path d="M268 552 v 20 M260 561 q 8 -13 16 0 M262 571 q 6 -10 12 0"/>
+          </g>
+          <!-- 远处一抹雾：用渐变收边，不能是硬杠，否则把画面切成三块 -->
+          <rect x="0" y="286" width="1200" height="130" fill="url(#mistGrad)"/>
+          <rect x="0" y="566" width="1200" height="108" fill="url(#mistGrad)"/>
+          <!-- 地名小字 -->
+          <g font-family="KaiTi,STKaiti,serif" fill="rgba(41,40,33,.32)" font-size="13" letter-spacing="4">
+            <text x="150" y="176">北 岭</text>
+            <text x="1010" y="470">西 岸</text>
+            <text x="180" y="700">入 海 口</text>
+          </g>
+        </svg>
+        <div id="atlasNodes"></div>
+      </div>
+    </div>
+    <div class="atlas-hud">
+      <p class="atlas-title">渡口 · 航线图<em>一条竖着的河</em></p>
+      <div class="atlas-tools">
+        <button type="button" id="atlasZoomIn" aria-label="放大">＋</button>
+        <button type="button" id="atlasZoomOut" aria-label="缩小">－</button>
+        <button type="button" id="atlasReset" aria-label="复位">⟲</button>
+      </div>
+    </div>
+    <p class="atlas-tip">拖动查看 · 点渡口靠岸</p>
+    <button class="atlas-close" type="button" id="atlasClose">收起地图</button>
+  </div>
+</div>
+<div class="crossing" id="crossing" aria-hidden="true">
+  <div class="crossing-orb orb-blue" id="crossOrbBlue"></div>
+  <div class="crossing-orb orb-pink" id="crossOrbPink"></div>
+  <div class="crossing-logo" id="crossLogo">
+    <svg viewBox="0 0 120 180" aria-hidden="true">
+      <ellipse class="cross-kh" cx="60" cy="52" rx="26" ry="44"/>
+      <rect class="cross-kh" x="41" y="92" width="38" height="58" rx="4"/>
+      <circle class="cross-seed" cx="60" cy="52" r="13"/>
+    </svg>
+  </div>
+  <div class="crossing-water" id="crossWater"></div>
+  <p class="crossing-caption" id="crossCaption">过河</p>
 </div>
 <script>
 (function(){
@@ -4322,7 +4633,10 @@ document.getElementById("roleConfirm").addEventListener("click", () => {
   tone("ding");
   closeRoleSelect();
   if (roleReturnTo === "mode") openModeSelect();
-  else initGame();
+  else if (roleReturnTo === "first") {
+    // 首次上船：定完摆渡人先看航线图，从地图上挑一站靠岸，别直接丢进某一场
+    openAtlas();
+  } else initGame();
 });
 
 document.getElementById("roleCancel").addEventListener("click", () => {
@@ -4331,11 +4645,208 @@ document.getElementById("roleCancel").addEventListener("click", () => {
   else openModeSelect();
 });
 
-// 说明页的两条出口：上船（去选身份）/ 回到模式选择
+/* ===== 世界观地图 =====
+   三座渡口锚在河岸上的固定坐标（1200×800 坐标系里），
+   玩家能拖着看、能缩放、点一下就靠岸。 */
+const ATLAS_SPOTS = {
+  d_001: { x: 528, y: 232, side: "left" },   // 码头东岸 · 1998，贴在河第一道弯的外侧
+  d_002: { x: 806, y: 470, side: "right" },  // 修桥工地 · 2003，第二道弯右脚
+  d_003: { x: 500, y: 622, side: "left" }    // 候船室 · 2011，末段左岸
+};
+
+const ATLAS_PIN_SVG =
+  '<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.8" ' +
+  'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+    '<path d="M16 29 L16 12"/>' +
+    '<path d="M9 12 A7 7 0 1 1 23 12 A7 7 0 1 1 9 12 Z"/>' +
+    '<path d="M6 6 L10 10 M26 6 L22 10"/>' +
+  "</svg>";
+
+const atlasState = { x: 0, y: 0, scale: 1, dragging: false, sx: 0, sy: 0, ox: 0, oy: 0 };
+
+function paintAtlas() {
+  const world = document.getElementById("atlasWorld");
+  if (!world) return;
+  world.style.setProperty("--atlas-scale", atlasState.scale.toFixed(3));
+  world.style.transform =
+    "translate(-50%,-50%) translate(" + atlasState.x + "px," + atlasState.y + "px) " +
+    "scale(" + atlasState.scale.toFixed(3) + ")";
+}
+
+function renderAtlas() {
+  const host = document.getElementById("atlasNodes");
+  if (!host) return;
+  const nextIdx = DOCKS.findIndex((d) => !voyageCleared.has(d.id));
+  host.innerHTML = "";
+  DOCKS.forEach((dock, index) => {
+    const spot = ATLAS_SPOTS[dock.id] || { x: 600, y: 200 + index * 200 };
+    const done = voyageCleared.has(dock.id);
+    const state = done ? "done" : index === nextIdx ? "current" : "locked";
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "atlas-node";
+    btn.dataset.state = state;
+    btn.style.left = spot.x + "px";
+    btn.style.top = spot.y + "px";
+    btn.setAttribute("aria-label", dock.place + " · " + dock.person);
+    btn.innerHTML =
+      '<span class="pin">' + ATLAS_PIN_SVG + "</span>" +
+      '<span class="atlas-label"><b>' + dock.place + "</b>" +
+        "<span>" + dock.year + " · " + dock.person + " · " + dock.age + " 岁</span></span>";
+    // 标签贴河岸外侧，避免压在水面上看不清
+    const label = btn.querySelector(".atlas-label");
+    if (spot.side === "left") {
+      label.style.transform = "translateX(-100%)";
+      label.style.left = "-22px";
+      label.style.textAlign = "right";
+    } else {
+      label.style.transform = "translateX(0)";
+      label.style.left = "22px";
+      label.style.textAlign = "left";
+    }
+    btn.addEventListener("click", function () {
+      if (atlasState.dragging) return;
+      // 从地图直接靠岸：只收地图，不再把竖排航线图顶上来（那样会叠在渡口底下）
+      const mask = document.getElementById("atlasMask");
+      if (mask) { mask.classList.remove("open"); mask.setAttribute("aria-hidden", "true"); }
+      openDock(dock.id);
+    });
+    host.appendChild(btn);
+  });
+}
+
+function openAtlas() {
+  const mask = document.getElementById("atlasMask");
+  if (!mask) return;
+  // 先把竖排航线图收起来，否则它 770 的层级会把地图压住
+  const voyageEl = document.getElementById("voyage");
+  if (voyageEl) {
+    voyageEl.classList.remove("open");
+    voyageEl.setAttribute("aria-hidden", "true");
+  }
+  renderAtlas();
+  mask.classList.add("open");
+  mask.setAttribute("aria-hidden", "false");
+  window.beat && window.beat("atlas_open", "");
+}
+
+function closeAtlas() {
+  const mask = document.getElementById("atlasMask");
+  if (!mask) return;
+  mask.classList.remove("open");
+  mask.setAttribute("aria-hidden", "true");
+  // 收起地图回到竖排航线图，让玩家看得见"已渡 x / 3"的进度
+  const voyageEl = document.getElementById("voyage");
+  if (voyageEl) {
+    renderVoyage();
+    voyageEl.classList.add("open");
+    voyageEl.setAttribute("aria-hidden", "false");
+  }
+}
+
+(function wireAtlas() {
+  const canvas = document.getElementById("atlasCanvas");
+  const mask = document.getElementById("atlasMask");
+  if (!canvas || !mask) return;
+
+  canvas.addEventListener("pointerdown", function (e) {
+    if (e.target.closest(".atlas-node")) return;
+    atlasState.dragging = true;
+    atlasState.moved = false;
+    atlasState.sx = e.clientX;
+    atlasState.sy = e.clientY;
+    atlasState.ox = atlasState.x;
+    atlasState.oy = atlasState.y;
+    canvas.classList.add("dragging");
+    canvas.setPointerCapture(e.pointerId);
+  });
+  canvas.addEventListener("pointermove", function (e) {
+    if (!atlasState.dragging) return;
+    const dx = e.clientX - atlasState.sx;
+    const dy = e.clientY - atlasState.sy;
+    if (Math.abs(dx) + Math.abs(dy) > 4) atlasState.moved = true;
+    atlasState.x = atlasState.ox + dx;
+    atlasState.y = atlasState.oy + dy;
+    paintAtlas();
+  });
+  canvas.addEventListener("pointerup", function (e) {
+    atlasState.dragging = false;
+    canvas.classList.remove("dragging");
+    try { canvas.releasePointerCapture(e.pointerId); } catch (err) { /* 忽略 */ }
+    // 拖动结束后再放开，防止拖完手一松就误触靠岸
+    setTimeout(function () { atlasState.dragging = false; }, 0);
+  });
+  canvas.addEventListener("pointercancel", function () {
+    atlasState.dragging = false;
+    canvas.classList.remove("dragging");
+  });
+
+  canvas.addEventListener("wheel", function (e) {
+    e.preventDefault();
+    const next = atlasState.scale + (e.deltaY < 0 ? 0.12 : -0.12);
+    atlasState.scale = Math.max(0.6, Math.min(2.4, next));
+    paintAtlas();
+  }, { passive: false });
+
+  const zoom = function (delta) {
+    atlasState.scale = Math.max(0.6, Math.min(2.4, atlasState.scale + delta));
+    paintAtlas();
+  };
+  document.getElementById("atlasZoomIn").addEventListener("click", function () { zoom(0.2); });
+  document.getElementById("atlasZoomOut").addEventListener("click", function () { zoom(-0.2); });
+  document.getElementById("atlasReset").addEventListener("click", function () {
+    atlasState.x = 0; atlasState.y = 0; atlasState.scale = 1; paintAtlas();
+  });
+  document.getElementById("atlasClose").addEventListener("click", closeAtlas);
+  mask.addEventListener("click", function (e) { if (e.target === mask) closeAtlas(); });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && mask.classList.contains("open")) closeAtlas();
+  });
+  paintAtlas();
+})();
+
+/* 穿越转场：粉蓝双球相撞 → 背景转白 → 钥匙孔绽开 → 水面漫上来。
+   双球用 transform 碰撞，不靠改背景色，这样手机上也是走合成层不重排。 */
+function runCrossing(done) {
+  const layer = document.getElementById("crossing");
+  if (!layer) { if (done) done(); return; }
+  const logo = document.getElementById("crossLogo");
+  const water = document.getElementById("crossWater");
+  const cap = document.getElementById("crossCaption");
+
+  layer.classList.add("on");
+  layer.setAttribute("aria-hidden", "false");
+  window.beat && window.beat("crossing", "voyage");
+
+  setTimeout(function () { if (logo) logo.classList.add("on"); }, 850);
+  setTimeout(function () {
+    if (water) water.classList.add("on");
+    if (cap) cap.classList.add("on");
+  }, 1500);
+  // 水面铺满、目标界面已经在下面准备好了，这时才让目标界面浮上来，
+  // 转场层自己淡出——不能等转场撤了再切，否则中间会闪一下白
+  setTimeout(function () { if (done) done(); }, 1900);
+  setTimeout(function () {
+    layer.classList.add("out");
+    setTimeout(function () {
+      layer.classList.remove("on", "out");
+      layer.setAttribute("aria-hidden", "true");
+      if (logo) logo.classList.remove("on");
+      if (water) water.classList.remove("on");
+      if (cap) cap.classList.remove("on");
+    }, 420);
+  }, 2000);
+}
+
+// 说明页的两条出口：上船（转场 → 选身份 → 落到世界地图）/ 回到模式选择
 document.getElementById("voyageIntroGo").addEventListener("click", () => {
   tone("ding");
   closeVoyageIntro();
-  openRoleSelect("first");
+  runCrossing(() => {
+    // 已经定过摆渡人的老玩家，不必再走一遍选身份
+    if (currentRole()) openAtlas();
+    else openRoleSelect("first");
+  });
 });
 document.getElementById("voyageIntroBack").addEventListener("click", () => {
   closeVoyageIntro();
@@ -4357,6 +4868,11 @@ document.getElementById("voyageIntroBack").addEventListener("click", () => {
     setTimeout(openVoyage, 200);
   } else if (preview === "intro") {
     setTimeout(openVoyageIntro, 200);
+  } else if (preview === "crossing") {
+    // 单独看穿越转场：不用真从引子点进来
+    setTimeout(function () { runCrossing(function () { openAtlas(); }); }, 300);
+  } else if (preview === "atlas") {
+    setTimeout(openAtlas, 300);
   } else if (preview === "board") {
     if (!playerRole) storeRole("qinger");
     mode = "solo";
@@ -4977,6 +5493,7 @@ async function submitDock(btn) {
 document.getElementById("voyageBack").addEventListener("click", closeVoyage);
 document.getElementById("roleChip").addEventListener("click", () => openRoleSelect("change"));
 document.getElementById("voyageRole").addEventListener("click", () => openRoleSelect("change"));
+document.getElementById("voyageAtlasBtn").addEventListener("click", () => openAtlas());
 
 function openModeSelect(){
   $("#splash").classList.add("done");
