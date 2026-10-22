@@ -769,34 +769,40 @@ body{
   margin-bottom:16px;
 }
 .stop-node{
-  position:relative;z-index:2;width:40px;height:28px;margin-left:3px;border-radius:8px;
+  position:relative;z-index:2;width:56px;height:52px;
   display:grid;place-items:center;
-  background:#fffdf9;border:1px solid rgba(26,26,26,.3);
-  box-shadow:0 4px 10px rgba(60,70,90,.14);
-  transition:box-shadow .25s ease;
+  background:none;border:0;box-shadow:none;
 }
+/* 插画自己带颜色，再套白底黑框就成了贴纸；让它直接落在纸上 */
+.stop-node .gate-art{border-radius:0;overflow:visible;}
 /* 渡口主体图形：三档透明度就是三种状态。
-   状态数值收在 --gate-op 一处，换图形只改 JS 里的 VOYAGE_GATE_SVG，这里不用动。 */
+   状态数值收在 --gate-op 一处，换图形只改 JS 里的 DOCK_ICON，这里不用动。 */
 .stop-node .gate-art{
   width:100%;height:100%;display:block;border-radius:7px;overflow:hidden;
   opacity:var(--gate-op,.3);transition:opacity .3s ease;
 }
 .stop-node .gate-art svg{width:100%;height:100%;display:block;}
 .stop-node .gate-no{
-  position:absolute;right:-7px;bottom:-5px;z-index:3;
-  min-width:16px;height:16px;padding:0 3px;border-radius:8px;
+  position:absolute;right:-5px;bottom:-3px;z-index:3;
+  min-width:15px;height:15px;padding:0 3px;border-radius:8px;
   display:grid;place-items:center;
-  font-size:8.5px;font-weight:700;line-height:1;color:#1a1a1a;
-  background:#fffdf9;border:1.5px solid #1a1a1a;box-shadow:1px 1px 0 rgba(26,26,26,.6);
+  font-size:8px;font-weight:600;line-height:1;color:#3c3a3a;
+  background:rgba(252,251,247,.94);border:1px solid rgba(26,26,26,.14);
+  box-shadow:0 1px 3px rgba(60,70,90,.1);
 }
 /* 三档透明度直接取设计稿里的原值：1.0 / 0.46 / 0.13 */
 .stop-node[data-state="current"]{
   --gate-op:1;
-  box-shadow:0 0 0 2px #1a1a1a,0 6px 14px rgba(60,70,90,.2);
 }
-.stop-node[data-state="done"]{--gate-op:.46;}
+/* 当前站在柔光页里不该用 2px 黑描边，换成会呼吸的细圈 */
+.stop-node[data-state="current"]::before{
+  content:"";position:absolute;inset:-7px;border-radius:50%;
+  border:1px solid rgba(70,66,96,.26);
+  animation:atlasPulse 2.6s ease-out infinite;
+}
+.stop-node[data-state="done"]{--gate-op:.72;}
 .stop-node[data-state="done"] .gate-no{background:#8fc4a5;}
-.stop-node[data-state="locked"]{--gate-op:.13;}
+.stop-node[data-state="locked"]{--gate-op:.34;filter:saturate(.55);}
 /* 图形常量留空时退回旧样式：26px 虹彩圆 + 数字，保证不开天窗 */
 .stop-node.is-empty{
   width:26px;height:26px;margin-left:6px;border-radius:50%;
@@ -828,9 +834,12 @@ body{
 }
 .stop-line{display:block;font-size:12px;line-height:1.75;color:#77726c;margin-top:5px;}
 .stop-tag{
-  display:inline-block;margin-top:9px;padding:2px 10px;border-radius:2px;
-  background:var(--gold-deep);border:1.5px solid #1a1a1a;box-shadow:2px 2px 0 rgba(26,26,26,.8);
-  font-family:"KaiTi","STKaiti",serif;font-size:12.5px;letter-spacing:.08em;color:#1a1a1a;
+  /* 原来是「墨底 + 1.5px 黑边 + 2px 错位阴影」，硬边物料的做法；
+     这一页是柔光流程页，混进来就成了一块补丁。改成纸色浅底。 */
+  display:inline-block;margin-top:9px;padding:2px 10px;border-radius:11px;
+  background:rgba(245,242,235,.85);border:1px solid rgba(70,66,96,.14);
+  box-shadow:none;
+  font-family:"KaiTi","STKaiti",serif;font-size:12.5px;letter-spacing:.08em;color:#4a4740;
 }
 .stop-go{
   position:absolute;right:14px;bottom:13px;font-size:11px;letter-spacing:.14em;color:var(--gold);
@@ -901,12 +910,15 @@ body{
 }
 .atlas-canvas.dragging{cursor:grabbing;}
 .atlas-world{
-  position:absolute;left:50%;top:50%;width:1200px;height:800px;
+  position:absolute;left:50%;top:50%;width:1454px;height:848px;
   transform:translate(-50%,-50%) scale(var(--atlas-scale,1));
   transform-origin:center center;
   will-change:transform;
 }
 .atlas-world > svg{position:absolute;inset:0;width:100%;height:100%;}
+/* 渡口地图与图标：来源 D:\自制小游戏\渡口.svg，原 class 加 dkm- 前缀避免撞名。
+   底图与三个图标共用这一份样式，不要在每个 svg 里重复贴。 */
+.dkm-1{fill: #4d4d4d;}.dkm-1,.dkm-2,.dkm-3,.dkm-4,.dkm-5,.dkm-6,.dkm-7,.dkm-8,.dkm-9,.dkm-10,.dkm-11,.dkm-12,.dkm-13,.dkm-14,.dkm-15,.dkm-16,.dkm-17,.dkm-18,.dkm-19{stroke-width: 0px;}.dkm-2{fill: #22b573;}.dkm-3{fill: #666;}.dkm-20{stroke: #a8d0ea;}.dkm-20,.dkm-21,.dkm-8,.dkm-22,.dkm-23,.dkm-24,.dkm-25{fill: none;}.dkm-20,.dkm-21,.dkm-22,.dkm-23,.dkm-24,.dkm-26,.dkm-25{stroke-miterlimit: 10;}.dkm-4{fill: #a67c52;}.dkm-6{fill: #29abe2;}.dkm-21,.dkm-22{stroke: #d9534f;}.dkm-21,.dkm-26{stroke-width: .75px;}.dkm-7{fill: #ff0;}.dkm-9{fill: #a43600;}.dkm-23{stroke: #a8d0ea;}.dkm-24{stroke: #a8d0ea;}.dkm-10{fill: #ccc;}.dkm-11{fill: #fff;}.dkm-26{stroke: #0031c3;}.dkm-26,.dkm-14{fill: #0031c3;}.dkm-12{fill: #ffc400;}.dkm-13{fill: #f15a24;}.dkm-25{stroke: #fbb03b;}.dkm-15{fill: #55d8af;}.dkm-16{fill: #006837;}.dkm-17{fill: #eb9700;}.dkm-18{fill: #8c6239;}.dkm-19{fill: #c69c6d;}
 .atlas-node{
   position:absolute;transform:translate(-50%,-50%);
   display:grid;place-items:center;cursor:pointer;
@@ -921,23 +933,18 @@ body{
 .atlas-node:hover .pin,.atlas-node:focus-visible .pin{
   transform:translateY(-3px);outline:none;
 }
-.atlas-node .pin svg{width:24px;height:30px;stroke:var(--gold-deep);}
-.atlas-node[data-state="done"] .pin svg{stroke:#3f6b52;}
+/* 节点就是那张插画本身，尺寸由 JS 按草稿里的包围盒给 */
+.atlas-node .pin svg{display:block;width:100%;height:100%;overflow:visible;}
 .atlas-node[data-state="done"] .pin::after{
   content:"";position:absolute;left:50%;top:50%;width:5px;height:5px;
   margin:-2.5px 0 0 -2.5px;border-radius:50%;background:var(--seal);
 }
-.atlas-node[data-state="locked"] .pin{opacity:.5;}
+.atlas-node[data-state="locked"] .pin{opacity:.58;filter:saturate(.5);}
 .atlas-node[data-state="current"] .pin::before{
-  content:"";position:absolute;left:50%;top:50%;width:48px;height:48px;
-  margin:-24px 0 0 -24px;border-radius:50%;
-  border:1px solid rgba(93,107,112,.4);
-  animation:atlasPulse 2s ease-out infinite;
-}
-.atlas-node[data-state="current"] .pin::after{
-  content:"";position:absolute;inset:-7px;border-radius:50%;
-  border:1.5px solid rgba(26,26,26,.45);
-  animation:atlasPulse 2s ease-out infinite;
+  content:"";position:absolute;left:50%;top:50%;width:calc(100% + 22px);height:calc(100% + 22px);
+  transform:translate(-50%,-50%);border-radius:50%;
+  border:1px solid rgba(70,66,96,.3);
+  animation:atlasPulse 2.6s ease-out infinite;
 }
 @keyframes atlasPulse{
   0%{transform:scale(.82);opacity:.9;}
@@ -945,6 +952,11 @@ body{
 }
 .atlas-label{
   position:absolute;top:44px;white-space:nowrap;pointer-events:none;
+  padding:3px 9px;border-radius:9px;
+  background:rgba(252,251,247,.82);
+  backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);
+  transform-origin:top center;
+  transform:translateX(-50%) scale(var(--lbl-inv,1));
 }
 .atlas-label b{
   display:block;font-family:"KaiTi","STKaiti",serif;font-size:15px;font-weight:600;
@@ -3469,87 +3481,7 @@ function restartCase(){
   <div class="atlas" role="dialog" aria-label="渡口航线图">
     <div class="atlas-canvas" id="atlasCanvas">
       <div class="atlas-world" id="atlasWorld">
-        <svg viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-          <defs>
-            <linearGradient id="riverGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0" stop-color="#e8f2f7"/>
-              <stop offset=".45" stop-color="#cfdfe7"/>
-              <stop offset="1" stop-color="#a8bcc6"/>
-            </linearGradient>
-            <linearGradient id="mistGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0" stop-color="rgba(252,251,247,0)"/>
-              <stop offset=".5" stop-color="rgba(252,251,247,.72)"/>
-              <stop offset="1" stop-color="rgba(252,251,247,0)"/>
-            </linearGradient>
-            <linearGradient id="landGrad" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0" stop-color="#faf8f3"/>
-              <stop offset="1" stop-color="#f2efe7"/>
-            </linearGradient>
-          </defs>
-          <rect width="1200" height="800" fill="url(#landGrad)"/>
-          <!-- 远山：三层，越远越淡 -->
-          <path d="M0 210 Q 120 130 250 196 T 520 178 T 800 205 T 1060 168 T 1200 200 L1200 0 L0 0 Z"
-                fill="rgba(93,107,112,.09)"/>
-          <path d="M0 268 Q 160 196 330 252 T 660 232 T 980 258 T 1200 240 L1200 0 L0 0 Z"
-                fill="rgba(93,107,112,.06)"/>
-          <!-- 河：从北往南，越走越宽 -->
-          <path d="M508 0 C 470 84, 560 132, 596 190 C 636 254, 500 300, 480 366
-                   C 458 440, 610 452, 634 512 C 656 568, 520 596, 528 660
-                   C 534 716, 588 748, 582 800
-                   L 774 800 C 780 748, 830 716, 836 660 C 844 596, 708 568, 730 512
-                   C 754 452, 906 440, 884 366 C 864 300, 728 254, 768 190
-                   C 804 132, 894 84, 856 0 Z"
-                fill="url(#riverGrad)"/>
-          <!-- 水纹：几笔横向短线 -->
-          <g stroke="rgba(255,255,255,.72)" stroke-width="1.6" stroke-linecap="round" fill="none">
-            <path d="M596 70 q 20 -7 40 0"/><path d="M660 96 q 18 -6 36 0"/>
-            <path d="M630 200 q 20 -7 40 0"/><path d="M540 268 q 19 -6 38 0"/>
-            <path d="M700 330 q 20 -7 40 0"/><path d="M520 400 q 18 -6 36 0"/>
-            <path d="M660 452 q 20 -7 40 0"/><path d="M560 540 q 19 -6 38 0"/>
-            <path d="M700 600 q 18 -6 36 0"/><path d="M600 676 q 20 -7 40 0"/>
-            <path d="M660 740 q 18 -6 36 0"/>
-          </g>
-          <!-- 岸线：两道墨线，手抖一点，不描太齐 -->
-          <g fill="none" stroke="rgba(41,40,33,.34)" stroke-width="1.6" stroke-linecap="round">
-            <path d="M508 0 C 470 84, 560 132, 596 190 C 636 254, 500 300, 480 366
-                     C 458 440, 610 452, 634 512 C 656 568, 520 596, 528 660
-                     C 534 716, 588 748, 582 800"/>
-            <path d="M856 0 C 894 84, 804 132, 768 190 C 728 254, 864 300, 884 366
-                     C 906 440, 754 452, 730 512 C 708 568, 844 596, 836 660
-                     C 830 716, 780 748, 774 800"/>
-          </g>
-          <!-- 支流：两处岔口，让河不是一根直筒 -->
-          <g fill="none" stroke="rgba(93,107,112,.5)" stroke-width="2" stroke-linecap="round">
-            <path d="M556 250 C 480 232, 410 250, 342 232"/>
-            <path d="M784 508 C 860 494, 924 516, 990 500"/>
-          </g>
-          <!-- 两岸村落：几笔屋顶，暗示有人住的岸不是空地 -->
-          <g fill="none" stroke="rgba(41,40,33,.3)" stroke-width="1.3" stroke-linecap="round">
-            <path d="M214 232 l 14 -11 l 14 11 M218 232 v 12 h 20 v -12"/>
-            <path d="M262 246 l 11 -9 l 11 9 M266 246 v 10 h 15 v -10"/>
-            <path d="M180 268 l 10 -8 l 10 8 M184 268 v 9 h 13 v -9"/>
-            <path d="M880 266 l 13 -10 l 13 10 M885 266 v 11 h 18 v -11"/>
-            <path d="M934 288 l 10 -8 l 10 8 M938 288 v 9 h 13 v -9"/>
-            <path d="M846 300 l 12 -10 l 12 10 M851 300 v 10 h 16 v -10"/>
-          </g>
-          <!-- 树：两点几笔，不画细 -->
-          <g fill="none" stroke="rgba(93,107,112,.42)" stroke-width="1.4" stroke-linecap="round">
-            <path d="M330 420 v 20 M322 428 q 8 -14 16 0 M324 438 q 6 -10 12 0"/>
-            <path d="M378 452 v 17 M371 459 q 7 -12 14 0"/>
-            <path d="M760 356 v 19 M752 364 q 8 -13 16 0 M754 374 q 6 -10 12 0"/>
-            <path d="M818 610 v 18 M811 617 q 7 -12 14 0"/>
-            <path d="M268 552 v 20 M260 561 q 8 -13 16 0 M262 571 q 6 -10 12 0"/>
-          </g>
-          <!-- 远处一抹雾：用渐变收边，不能是硬杠，否则把画面切成三块 -->
-          <rect x="0" y="286" width="1200" height="130" fill="url(#mistGrad)"/>
-          <rect x="0" y="566" width="1200" height="108" fill="url(#mistGrad)"/>
-          <!-- 地名小字 -->
-          <g font-family="KaiTi,STKaiti,serif" fill="rgba(41,40,33,.32)" font-size="13" letter-spacing="4">
-            <text x="150" y="176">北 岭</text>
-            <text x="1010" y="470">西 岸</text>
-            <text x="180" y="700">入 海 口</text>
-          </g>
-        </svg>
+        <svg id="_图层_1" data-name="图层 1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 1454.44 847.72" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><defs></defs><path class="dkm-14" d="m29.72,835.39V223.72c174.58-18.29,241.59,22.83,271,62,43.81,58.35,3.84,111.91,35,243,14.22,59.83,45.75,192.44,151,251,131.78,73.32,294.54-16.47,313-27l4,95"/><circle class="dkm-26" cx="1339.3" cy="396.05" r="19.54"/><g id="_工地2" data-name="工地2"><g><g></g><g></g></g><g></g></g><g><g></g></g><g><g></g></g><g><g></g></g><line class="dkm-21" x1="1256.22" y1="399.22" x2="1413.22" y2="396.22"/><line class="dkm-22" x1="1350.22" y1="340.22" x2="1354.22" y2="506.22"/><line class="dkm-25" x1="429.22" y1=".22" x2="846.22" y2="843.22"/><line class="dkm-25" x1=".21" y1="188.29" x2="1454.24" y2="845.16"/><circle class="dkm-7" cx="676.97" cy="494.47" r="19.75"/><circle class="dkm-10" cx="675.72" cy="495.72" r="4"/><circle class="dkm-5" cx="671.72" cy="493.72" r="2"/></svg>
         <div id="atlasNodes"></div>
       </div>
     </div>
@@ -4714,20 +4646,22 @@ document.getElementById("roleCancel").addEventListener("click", () => {
    三座渡口锚在河岸上的固定坐标（1200×800 坐标系里），
    玩家能拖着看、能缩放、点一下就靠岸。 */
 const ATLAS_SPOTS = {
-  d_001: { x: 528, y: 232, side: "left" },   // 码头东岸 · 1998，贴在河第一道弯的外侧
-  d_002: { x: 806, y: 470, side: "right" },  // 修桥工地 · 2003，第二道弯右脚
-  d_003: { x: 500, y: 622, side: "left" }    // 候船室 · 2011，末段左岸
+  // 坐标取自用户地图（1454x848）里三个图标的包围盒中心，别再手调
+  d_001: { x: 1276, y: 172, side: "right" },  // 码头东岸 · 1998 → 工地
+  d_002: { x: 1008, y: 427, side: "left" },   // 修桥工地 · 2003 → 候船室旁的工地2
+  d_003: { x: 1257, y: 611, side: "right" }   // 候船室 · 2011 → 候船室
 };
 
-/* 渡口节点用「花苞」，不是钥匙孔：一片弯瓣托一枚尖蕊，取自主视觉 erbian.svg。
-   三笔就够——外瓣弧、内蕊尖、瓣底一道收口，不要再加圆环或底座。 */
-const ATLAS_PIN_SVG =
-  '<svg viewBox="0 0 24 30" fill="none" stroke="currentColor" stroke-width="1.7" ' +
-  'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
-    '<path d="M12 27 C5 23 3.5 16 5.2 10.5 C6.6 6 9.4 3.4 12 2"/>' +
-    '<path d="M12 27 C19 23 20.5 16 18.8 10.5 C17.4 6 14.6 3.4 12 2"/>' +
-    '<path d="M12 24 C10.6 19 10.6 12 12 6.6"/>' +
-  "</svg>";
+/* 三个渡口各用自己那张插画（来源 D:\自制小游戏\渡口.svg）。
+   对应按「画的是什么」定，不按草图的上下位置：d_001 码头东岸 与 d_002 修桥工地 都是工地
+   （草图给了两张工地），d_003 候船室 用候船室那张。 */
+const DOCK_ICON = {
+  d_001: "<svg xmlns=\"http://www.w3.org/2000/svg\" preserveAspectRatio=\"xMidYMid meet\" viewBox=\"1187.89 543.72 138.5 135\"><g><ellipse class=\"dkm-23\" cx=\"1273.72\" cy=\"617.42\" rx=\"49.5\" ry=\"47.73\"></ellipse><rect class=\"dkm-16\" x=\"1183.43\" y=\"606.27\" width=\"147.43\" height=\"9.65\" transform=\"translate(473.97 -546.7) rotate(30)\"></rect><polygon class=\"dkm-16\" points=\"1213.18 654.41 1213.68 652.11 1234.72 656.72 1234.72 651.84 1227.3 650.21 1227.47 649.43 1234.72 651.02 1234.72 639.32 1210.72 639.32 1210.72 661.72 1234.72 661.72 1234.72 659.13 1213.18 654.41\"></polygon><rect class=\"dkm-2\" x=\"1193.66\" y=\"612.61\" width=\"11.2\" height=\"11.48\" transform=\"translate(-149.87 597.54) rotate(-26.39)\"></rect><ellipse class=\"dkm-19\" cx=\"1278.72\" cy=\"664.72\" rx=\"42\" ry=\"7\"></ellipse><path class=\"dkm-3\" d=\"m1231.22,608.72c-8.01,0-14.5,6.49-14.5,14.5s6.49,14.5,14.5,14.5,14.5-6.49,14.5-14.5-6.49-14.5-14.5-14.5Zm3.5,21c-4.97,0-9-4.03-9-9s4.03-9,9-9,9,4.03,9,9-4.03,9-9,9Z\"></path><rect class=\"dkm-12\" x=\"1242.35\" y=\"590.99\" width=\"62.8\" height=\"41.06\" transform=\"translate(173.66 -275.16) rotate(13.22)\"></rect><rect class=\"dkm-11\" x=\"1254.72\" y=\"587.72\" width=\"4\" height=\"82\"></rect><rect class=\"dkm-11\" x=\"1273.72\" y=\"592.72\" width=\"6\" height=\"70\"></rect><rect class=\"dkm-17\" x=\"1276.72\" y=\"592.72\" width=\"6\" height=\"65\"></rect><rect class=\"dkm-17\" x=\"1258.72\" y=\"588.72\" width=\"6\" height=\"81\"></rect><rect class=\"dkm-17\" x=\"1292.72\" y=\"546.72\" width=\"6\" height=\"123\"></rect><rect class=\"dkm-11\" x=\"1289.72\" y=\"568.72\" width=\"7\" height=\"107\"></rect><rect class=\"dkm-12\" x=\"1228.79\" y=\"588.65\" width=\"15.11\" height=\"24.82\" transform=\"translate(170.28 -266.88) rotate(13.22)\"></rect><path class=\"dkm-3\" d=\"m1290.2,619.22c-8.01,0-14.5,6.49-14.5,14.5s6.49,14.5,14.5,14.5,14.5-6.49,14.5-14.5-6.49-14.5-14.5-14.5Zm3.5,21c-4.97,0-9-4.03-9-9s4.03-9,9-9,9,4.03,9,9-4.03,9-9,9Z\"></path></g></svg>",
+  d_002: "<svg xmlns=\"http://www.w3.org/2000/svg\" preserveAspectRatio=\"xMidYMid meet\" viewBox=\"1196.6 115.73 158.62 111.99\"><g><ellipse class=\"dkm-24\" cx=\"1264.72\" cy=\"177.22\" rx=\"42\" ry=\"40.5\"></ellipse><rect class=\"dkm-16\" x=\"1192.14\" y=\"162.73\" width=\"147.43\" height=\"9.65\" transform=\"translate(253.37 -610.48) rotate(30)\"></rect><polygon class=\"dkm-16\" points=\"1254.79 202.59 1255.42 199.71 1281.72 205.47 1281.72 199.37 1272.44 197.33 1272.65 196.36 1281.72 198.34 1281.72 183.72 1251.72 183.72 1251.72 211.72 1281.72 211.72 1281.72 208.48 1254.79 202.59\"></polygon><rect class=\"dkm-12\" x=\"1261.27\" y=\"118.35\" width=\"8.35\" height=\"106.78\" transform=\"translate(72.84 -284.92) rotate(13.22)\"></rect><rect class=\"dkm-2\" x=\"1238.72\" y=\"130.72\" width=\"21\" height=\"94\"></rect><rect class=\"dkm-11\" x=\"1247.72\" y=\"146.72\" width=\"7\" height=\"59\" rx=\"3.5\" ry=\"3.5\"></rect><rect class=\"dkm-11\" x=\"1265.72\" y=\"147.72\" width=\"1\" height=\"0\"></rect><rect class=\"dkm-11\" x=\"1247.72\" y=\"211.72\" width=\"7\" height=\"4\"></rect><rect class=\"dkm-8\" x=\"1275.22\" y=\"163.22\" width=\"77\" height=\"48\"></rect></g></svg>",
+  d_003: "<svg xmlns=\"http://www.w3.org/2000/svg\" preserveAspectRatio=\"xMidYMid meet\" viewBox=\"943.72 367.29 129 119\"><g><circle class=\"dkm-20\" cx=\"1006.89\" cy=\"426.79\" r=\"56.5\"></circle><circle class=\"dkm-15\" cx=\"1043.72\" cy=\"429.72\" r=\"24\"></circle><ellipse class=\"dkm-2\" cx=\"1047.22\" cy=\"436.22\" rx=\"20.5\" ry=\"18.5\"></ellipse><rect class=\"dkm-18\" x=\"1038.72\" y=\"417.72\" width=\"8\" height=\"42\"></rect><rect class=\"dkm-4\" x=\"1020.72\" y=\"441.72\" width=\"5\" height=\"35\"></rect><rect class=\"dkm-18\" x=\"1000.72\" y=\"417.72\" width=\"8\" height=\"42\"></rect><rect class=\"dkm-4\" x=\"1051.72\" y=\"412.72\" width=\"5\" height=\"65\"></rect><polygon class=\"dkm-9\" points=\"1015.72 469.72 966.72 469.72 946.72 437.72 992.72 437.72 1015.72 469.72\"></polygon><rect class=\"dkm-9\" x=\"1020.72\" y=\"449.72\" width=\"49\" height=\"21\"></rect><path class=\"dkm-13\" d=\"m969.72,399.21v58.59h74.84v-58.59h-74.84Zm24.95,51.05h-19.14v-18.56h19.14v18.56Zm0-21.46h-19.14v-21.46h19.14v21.46Zm14.5,21.46h-11.02v-18.56h11.02v18.56Zm0-21.46h-11.02v-21.46h11.02v21.46Zm24.95,21.46h-20.88v-18.56h20.88v18.56Zm0-21.46h-20.88v-21.46h20.88v21.46Z\"></path><path class=\"dkm-6\" d=\"m971.89,396.96v58.59h74.84v-58.59h-74.84Zm24.95,51.05h-19.14v-18.56h19.14v18.56Zm0-21.46h-19.14v-21.46h19.14v21.46Zm14.5,21.46h-11.02v-18.56h11.02v18.56Zm0-21.46h-11.02v-21.46h11.02v21.46Zm24.95,21.46h-20.88v-18.56h20.88v18.56Zm0-21.46h-20.88v-21.46h20.88v21.46Z\"></path><rect class=\"dkm-19\" x=\"1036.85\" y=\"408.33\" width=\"2.65\" height=\"44.31\" transform=\"translate(476.64 -543.06) rotate(37.5)\"></rect><polygon class=\"dkm-9\" points=\"1020.72 470.72 1000.72 437.72 1001.25 417.74 1020.72 449.72 1020.72 470.72\"></polygon><rect class=\"dkm-4\" x=\"1020.72\" y=\"442.72\" width=\"5\" height=\"5\"></rect><rect class=\"dkm-4\" x=\"1051.72\" y=\"412.72\" width=\"5\" height=\"5\"></rect><rect class=\"dkm-6\" x=\"1020.72\" y=\"447.72\" width=\"8\" height=\"6\"></rect></g></svg>"
+};
+/* 草稿里每张图的包围盒尺寸，用来把节点撑到该有的比例 */
+const DOCK_ICON_SIZE = { d_001: [133, 129], d_002: [153, 106], d_003: [123, 113] };
 
 const atlasState = { x: 0, y: 0, scale: 1, dragging: false, sx: 0, sy: 0, ox: 0, oy: 0 };
 
@@ -4738,6 +4672,10 @@ function paintAtlas() {
   world.style.transform =
     "translate(-50%,-50%) translate(" + atlasState.x + "px," + atlasState.y + "px) " +
     "scale(" + atlasState.scale.toFixed(3) + ")";
+  // 标签跟着世界一起缩，缩到 0.4 时字只有 6px，等于没写。
+  // 反向补一个系数（上限 2.4 倍），让字号在屏幕上基本恒定。
+  const inv = Math.min(2.4, Math.max(1, 1 / atlasState.scale));
+  world.style.setProperty("--lbl-inv", inv.toFixed(3));
 }
 
 function renderAtlas() {
@@ -4756,21 +4694,19 @@ function renderAtlas() {
     btn.style.left = spot.x + "px";
     btn.style.top = spot.y + "px";
     btn.setAttribute("aria-label", dock.place + " · " + dock.person);
+    const art = DOCK_ICON[dock.id] || DOCK_ICON.d_001;
+    const sz = DOCK_ICON_SIZE[dock.id] || [130, 120];
     btn.innerHTML =
-      '<span class="pin">' + ATLAS_PIN_SVG + "</span>" +
+      '<span class="pin" style="width:' + Math.round(sz[0] * 0.84) + 'px;height:' +
+        Math.round(sz[1] * 0.84) + 'px">' + art + "</span>" +
       '<span class="atlas-label"><b>' + dock.place + "</b>" +
         "<span>" + dock.year + " · " + dock.person + " · " + dock.age + " 岁</span></span>";
-    // 标签贴河岸外侧，避免压在水面上看不清
+    // 标签放到图标正下方：图标现在是一张百来像素的插画，
+    // 原来「贴左右两侧 22px」的偏移是按 40px 小图钉算的，会直接压在画上。
     const label = btn.querySelector(".atlas-label");
-    if (spot.side === "left") {
-      label.style.transform = "translateX(-100%)";
-      label.style.left = "-22px";
-      label.style.textAlign = "right";
-    } else {
-      label.style.transform = "translateX(0)";
-      label.style.left = "22px";
-      label.style.textAlign = "left";
-    }
+    label.style.left = "50%";
+    label.style.textAlign = "center";
+    label.style.top = Math.round(sz[1] * 0.84 + 8) + "px";
     btn.addEventListener("click", function () {
       if (atlasState.dragging) return;
       // 从地图直接靠岸：只收地图，不再把竖排航线图顶上来（那样会叠在渡口底下）
@@ -4780,6 +4716,29 @@ function renderAtlas() {
     });
     host.appendChild(btn);
   });
+}
+
+/* 新地图是横版 1454x848，竖屏手机在 scale=1 时只能看到中间 1/4 宽度，
+   而三座渡口都在右半边——打开地图如果不定过去，玩家会以为图是空的。
+   所以：按画布算一个「能看清图标」的缩放，再把镜头推到下一站。 */
+function focusAtlasOn(dockId) {
+  const canvas = document.getElementById("atlasCanvas");
+  if (!canvas) return;
+  const cw = canvas.clientWidth || 390;
+  // 竖屏只能看到横向约 600 个世界单位；再小字就没了（标签已反向补过，但图标会糊）
+  const fit = Math.max(0.58, Math.min(0.95, cw / 640));
+  const spot = (dockId && ATLAS_SPOTS[dockId]) || null;
+  atlasState.scale = fit;
+  if (spot) {
+    // 三座渡口都挤在 x≈1000~1300 这条带上，河岸在 x≈800。
+    // 所以横向压住这条带（而不是死盯某一个点），纵向才跟着目标站走。
+    const centerX = 1060;
+    atlasState.x = (727 - centerX) * fit;
+    atlasState.y = (424 - spot.y) * fit;
+  } else {
+    atlasState.x = 0; atlasState.y = 0;
+  }
+  paintAtlas();
 }
 
 function openAtlas() {
@@ -4794,6 +4753,10 @@ function openAtlas() {
   renderAtlas();
   mask.classList.add("open");
   mask.setAttribute("aria-hidden", "false");
+  // 镜头落到「下一站」：第一个还没渡过的渡口
+  const nextDock = DOCKS.find((d) => !voyageCleared.has(d.id)) || DOCKS[DOCKS.length - 1];
+  // 等布局生效再算，否则 clientWidth 是 0
+  requestAnimationFrame(function () { focusAtlasOn(nextDock && nextDock.id); });
   window.beat && window.beat("atlas_open", "");
 }
 
@@ -5003,13 +4966,6 @@ function saveVoyage() {
    原稿是 322×243 的“一块板 + 顶上开拱门 + 右上绿三角”，但存进 Sketch 时是上下颠倒的，
    这里用 translate(0,243) scale(1,-1) 翻回来，让门立在底上。
    三档透明度由 .stop-node 的 data-state 决定：current=100% / done=55% / locked=30%。 */
-const VOYAGE_GATE_SVG =
-  '<svg viewBox="-6 -8 372 260" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">' +
-    '<g transform="translate(0,243) scale(1,-1)">' +
-      '<path d="M0.52 248.31 L322.52 246.93 L321.48 3.93 L280.07 4.11 C286.16 16.38 289.59 30.09 289.65 44.57 C289.88 97.31 245.29 140.26 190.06 140.49 C134.83 140.73 89.88 98.17 89.65 45.42 C89.59 30.94 92.91 17.20 98.89 4.88 L20.16 5.22 C22.91 9.25 24.52 14.05 24.54 19.20 C24.60 32.76 13.66 43.95 -0.35 45.20 L0.52 248.31 Z" fill="#1a1a1a"/>' +
-    '</g>' +
-    '<path d="M316.47 7.51 L361.00 49.90 L292.19 77.59 Z" fill="#5fbf8a"/>' +
-  '</svg>';
 
 function renderVoyage() {
   const route = document.getElementById("voyageRoute");
@@ -5027,9 +4983,10 @@ function renderVoyage() {
     const state = done ? "done" : index === nextIdx ? "current" : "locked";
     const label = done ? "✓" : String(index + 1).padStart(2, "0");
     // 图形没到位时退回原来的虹彩圆 + 数字，不至于开天窗
-    const nodeMarkup = VOYAGE_GATE_SVG
+    const art = DOCK_ICON[dock.id];
+    const nodeMarkup = art
       ? '<span class="stop-node" data-state="' + state + '">' +
-          '<span class="gate-art">' + VOYAGE_GATE_SVG + "</span>" +
+          '<span class="gate-art">' + art + "</span>" +
           '<span class="gate-no">' + label + "</span>" +
         "</span>"
       : '<span class="stop-node is-empty">' + label + "</span>";
