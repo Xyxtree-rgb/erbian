@@ -17,6 +17,8 @@ from openai import OpenAIError
 from config import resource_path
 from services import stats
 from services import duel
+from services import account as account_svc
+from services import billing as billing_svc
 from services.deepseek import (
     DeepSeekConfigurationError,
     DeepSeekResponseError,
@@ -1472,3 +1474,156 @@ def duel_say(code):
 def duel_ai(code):
     status, payload = duel.ai_turn(code, _duel_judge_ai)
     return jsonify(payload), status
+
+
+# ---------------------------------------------------------------------------
+# 账号与云存档
+# 登录通道设计成可插拔：内测期走邀请码直登，正式期换短信/微信只换 provider。
+# ---------------------------------------------------------------------------
+def _current_user():
+    """从 Authorization 头或 body 里取 token，换出当前用户。"""
+    token = request.headers.get("Authorization", "").replace("Bearer ", "").strip()
+    if not token:
+        data = request.get_json(silent=True)
+        if isinstance(data, dict):
+            token = str(data.get("token", "")).strip()
+    return account_svc.user_by_token(token), token
+
+
+@api.route("/api/account/code", methods=["POST", "OPTIONS"])
+def account_request_code():
+    """申请短信验证码。未配置服务商时返回 dev_code，仅用于本地联调。"""
+    if request.method == "OPTIONS":
+        return jsonify({}), 200
+    data = request.get_json(silent=True) or {}
+    try:
+        result = account_svc.request_code(
+            str(data.get("channel", "phone")), str(data.get("credential", ""))
+        )
+    except account_svc.AccountError as exc:
+        return jsonify({"ok": False, "error": str(exc)}), 400
+    return jsonify({"ok": True, **result})
+
+
+@api.route("/api/account/login", methods=["POST", "OPTIONS"])
+def account_login():
+    """登录 / 注册一步完成。channel: invite | phone"""
+    if request.method == "OPTIONS":
+        return jsonify({}), 200
+    data = request.get_json(silent=True) or {}
+    try:
+        user = account_svc.login(
+            str(data.get("channel", "invite")),
+            str(data.get("credential", "")),
+            str(data.get("code", "")),
+            str(data.get("nick", "")),
+        )
+    except account_svc.AccountError as exc:
+        return jsonify({"ok": False, "error": str(exc)}), 400
+    user["entitlement"] = billing_svc.entitlement(user["uid"])
+    return jsonify({"ok": True, **user})
+
+
+@api.route("/api/account/me", methods=["GET"])
+def account_me():
+    user, _ = _current_user()
+    if not user:
+        return jsonify({"ok": False, "error": "未登录"}), 401
+    return jsonify({"ok": True, **user, "entitlement": billing_svc.entitlement(user["uid"])})
+
+
+@api.route("/api/account/logout", methods=["POST", "OPTIONS"])
+def account_logout():
+    if request.method == "OPTIONS":
+        return jsonify({}), 200
+    _, token = _current_user()
+    account_svc.logout(token)
+    return jsonify({"ok": True})
+
+
+@api.route("/api/account/save", methods=["GET", "POST", "OPTIONS"])
+def account_save():
+    """云存档。POST 写、GET 读（带 scope 读单个，不带读全部）。"""
+    if request.method == "OPTIONS":
+        return jsonify({}), 200
+    user, _ = _current_user()
+    if not user:
+        return jsonify({"ok": False, "error": "未登录"}), 401
+
+    if request.method == "GET":
+        scope = request.args.get("scope", "")
+        return jsonify({"ok": True, "saves": account_svc.load_progress(user["uid"], scope)})
+
+    data = request.get_json(silent=True) or {}
+    scope = str(data.get("scope", "")).strip()
+    if not scope:
+        return jsonify({"ok": False, "error": "scope 不能为空"}), 400
+    payload = data.get("payload", "")
+    if not isinstance(payload, str):
+        payload = json.dumps(payload, ensure_ascii=False)
+    if len(payload) > 200000:
+        return jsonify({"ok": False, "error": "存档过大"}), 413
+    account_svc.save_progress(user["uid"], scope, payload)
+    return jsonify({"ok": True})
+
+
+# ---------------------------------------------------------------------------
+# 付费与权益（接口全通，但 ERBIAN_PAY_ENABLED 未开时不产生任何收款动作）
+# ---------------------------------------------------------------------------
+@api.route("/api/billing/plans", methods=["GET"])
+def billing_plans():
+    return jsonify({"ok": True, "pay_enabled": billing_svc.pay_enabled(),
+                    "plans": billing_svc.list_plans()})
+
+
+@api.route("/api/billing/order", methods=["POST", "OPTIONS"])
+def billing_create_order():
+    if request.method == "OPTIONS":
+        return jsonify({}), 200
+    user, _ = _current_user()
+    if not user:
+        return jsonify({"ok": False, "error": "未登录"}), 401
+    data = request.get_json(silent=True) or {}
+    try:
+        order = billing_svc.create_order(user["uid"], str(data.get("plan_code", "")))
+    except billing_svc.BillingError as exc:
+        return jsonify({"ok": False, "error": str(exc)}), 400
+    return jsonify({"ok": True, **order})
+
+
+@api.route("/api/billing/notify", methods=["POST", "OPTIONS"])
+def billing_notify():
+    """支付回调占位。真接支付时在这里验签，再调 mark_paid。"""
+    if request.method == "OPTIONS":
+        return jsonify({}), 200
+    data = request.get_json(silent=True) or {}
+    order_no = str(data.get("order_no", ""))
+    if not order_no:
+        return jsonify({"ok": False, "error": "缺少 order_no"}), 400
+    try:
+        return jsonify({"ok": True, **billing_svc.mark_paid(order_no, str(data.get("provider_order", "")))})
+    except billing_svc.BillingError as exc:
+        return jsonify({"ok": False, "error": str(exc)}), 400
+
+
+@api.route("/api/license/redeem", methods=["POST", "OPTIONS"])
+def license_redeem():
+    """兑换码开通。内测期手动发码走的就是这条路。"""
+    if request.method == "OPTIONS":
+        return jsonify({}), 200
+    user, _ = _current_user()
+    if not user:
+        return jsonify({"ok": False, "error": "未登录"}), 401
+    data = request.get_json(silent=True) or {}
+    try:
+        result = billing_svc.redeem(user["uid"], str(data.get("code", "")))
+    except billing_svc.BillingError as exc:
+        return jsonify({"ok": False, "error": str(exc)}), 400
+    result["entitlement"] = billing_svc.entitlement(user["uid"])
+    return jsonify({"ok": True, **result})
+
+
+try:
+    account_svc.bootstrap()
+except Exception:  # 建表失败不能拖垮整个服务
+    logger.exception("账号表初始化失败")
