@@ -44,6 +44,7 @@ _GZIP_CACHE: dict = {}
 def _send_gzip_file(path, mimetype):
     try:
         mtime = os.path.getmtime(path)
+        size = os.path.getsize(path)
     except OSError:
         return jsonify({"error": "文件不存在"}), 404
     key = (path, mtime)
@@ -56,12 +57,26 @@ def _send_gzip_file(path, mimetype):
             _GZIP_CACHE.clear()
         _GZIP_CACHE[key] = cached
     raw, packed = cached
+
+    # 主页是 370KB 的单文件，浏览器不给缓存就得每次重下 100KB（压缩后）。
+    # 用 mtime+size 做 ETag：改完文件自动变，客户端拿到新的；没改就 304，不传正文。
+    etag = '"%x-%x"' % (int(mtime * 1000), size)
+    if (request.headers.get("If-None-Match") or "") == etag:
+        resp = Response(b"", status=304, mimetype=mimetype)
+        resp.headers["ETag"] = etag
+        # 缓存内容的同时每次回来问一句，这样发版能立刻生效
+        resp.headers["Cache-Control"] = "no-cache"
+        resp.headers["Vary"] = "Accept-Encoding"
+        return resp
+
     accepts = "gzip" in (request.headers.get("Accept-Encoding") or "")
     body = packed if accepts else raw
     resp = Response(body, mimetype=mimetype)
     if accepts:
         resp.headers["Content-Encoding"] = "gzip"
         resp.headers["Vary"] = "Accept-Encoding"
+    resp.headers["ETag"] = etag
+    resp.headers["Cache-Control"] = "no-cache"
     resp.headers["Content-Length"] = str(len(body))
     return resp
 

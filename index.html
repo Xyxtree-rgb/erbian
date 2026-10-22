@@ -11,7 +11,9 @@
 <link rel="apple-touch-icon" href="assets/icon/icon-192.png">
 
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<meta name="erbian-build" content="2026-10-19T2105-mode-vi">
+<!-- 开屏字是首屏唯一必须的图，提前发起，别等解析到 <img> 才去要 -->
+<link rel="preload" as="image" href="assets/logo/logo-earbian-ink.png">
+<meta name="erbian-build" content="2026-10-22T1620-atlas-crossing">
 <title>耳辩 · 与尔同辩</title>
 <style>
 :root{
@@ -3223,7 +3225,7 @@ function restartCase(){
     <button class="rest-room-open" id="openRestRoom" type="button">驿站 · 休息</button>
   </div>
   <section class="story-view story-home active" id="chapterView">
-    <img class="story-logo" src="assets/logo/logo-earbian.png" alt="耳辩">
+    <img class="story-logo" src="assets/logo/logo-earbian.png" alt="耳辩" loading="lazy" decoding="async">
     <p class="story-tagline">在你耳边 · 与你同辩</p>
     <h1 class="story-heading">断案 · 案件列表</h1>
     <p class="story-intro">选择一桩案件，走进现场，寻找能让真相开口的线索。</p>
@@ -3316,7 +3318,7 @@ function restartCase(){
   </section>
   <div class="story-kb-modal" id="storyKnowledgeModal" aria-hidden="true">
     <section class="story-kb-dialog" role="dialog" aria-modal="true" aria-labelledby="storyKnowledgeTitle">
-      <h2 id="storyKnowledgeTitle" aria-label="知识库 · 选择一条作为辩论证据"><img class="story-kb-title-image" src="/assets/icon/text_knowledge.png" alt="知识库"></h2>
+      <h2 id="storyKnowledgeTitle" aria-label="知识库 · 选择一条作为辩论证据"><img class="story-kb-title-image" src="/assets/icon/text_knowledge.png" alt="知识库" loading="lazy" decoding="async"></h2>
       <div class="story-kb-search">
         <input id="storyKnowledgeQuery" type="search" placeholder="搜索关键词，例如：食品安全">
         <button class="story-primary" id="storyKnowledgeSearch">搜索</button>
@@ -3555,8 +3557,8 @@ function restartCase(){
     <div class="hud" id="hud"></div>
     <button class="icon-btn" id="soundBtn" title="声音">♪</button>
     <div class="turn-indicator" id="turnIndicator">青洏回合</div>
-    <button class="kb-pill" onclick="openDrawer()" title="知识库"><img src="./assets/icon/icon_knowledge.png" alt="" style="width:18px;height:18px;margin-right:6px;vertical-align:middle;"> 全知笔记</button>
-    <button class="frag-fab" id="fragFabBtn" title="手记" aria-label="手记"><img src="./assets/icon/icon_fragment.png" alt=""></button>
+    <button class="kb-pill" onclick="openDrawer()" title="知识库"><img src="./assets/icon/icon_knowledge.png" alt="" loading="lazy" decoding="async" style="width:18px;height:18px;margin-right:6px;vertical-align:middle;"> 全知笔记</button>
+    <button class="frag-fab" id="fragFabBtn" title="手记" aria-label="手记"><img src="./assets/icon/icon_fragment.png" alt="" loading="lazy" decoding="async"></button>
     <button class="icon-btn" id="settingsBtn" title="设置与菜单" aria-label="设置与菜单">☰</button>
   </div>
   <div class="scene">
