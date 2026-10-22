@@ -3192,8 +3192,8 @@ function restartCase(){
       <div class="intro-step">
         <span class="intro-no">02</span>
         <div class="intro-copy">
-          <p class="intro-lead">摇骰，挑话。</p>
-          <p class="intro-text">摇一次骰子决定这一趟的水；从他的三句话里挑一句递过去，挑错了他会顶回来。</p>
+          <p class="intro-lead">摇骰，看水。</p>
+          <p class="intro-text">先摇一次骰子，看这趟水顺不顺——水越急，他嘴越硬。挑一句只是开个场，真要把他送过河，得靠你自己把话说赢。</p>
         </div>
       </div>
       <div class="intro-step">
@@ -4559,6 +4559,7 @@ async function openDock(id) {
       data,
       hp: data.opponent.hp,
       maxHp: data.opponent.hp,
+      baseHp: data.opponent.hp,
       phase: "meet",
       dice: 0,
       tide: "flat",
@@ -4684,6 +4685,20 @@ function tideOf(face) {
   return "hard";
 }
 
+/* 骰子只决定这一趟的水有多急——水越急他越硬，血更厚、话更难顶。
+   它**不**决定你说的话对不对，那是裁判的事，这条不能让。
+   之前三张话术里有一张正好 30 伤害、对手也只有 30 血，
+   挑中就直接赢，等于把「你自己说」这条主路废掉了。 */
+const TIDE_HP = { easy: 0.8, flat: 1.0, hard: 1.3 };
+// 三选一是开场，不是胜负手：只给四成伤害，剩下的得自己说
+const CHOICE_SCALE = 0.4;
+
+function applyTide(s) {
+  if (!s || !s.baseHp) return;
+  s.maxHp = Math.max(1, Math.round(s.baseHp * (TIDE_HP[s.tide] || 1)));
+  s.hp = s.maxHp;
+}
+
 function paintDie(el, face) {
   if (!el) return;
   const on = DICE_FACES[face] || [];
@@ -4747,7 +4762,7 @@ function renderDock() {
         "</div>" +
         '<div class="dock-roll-copy">' +
           '<p class="dock-roll-title">先摇一摇</p>' +
-          '<p class="dock-roll-sub">看看这一趟的水，顺不顺。</p>' +
+          '<p class="dock-roll-sub">水越急他越硬。但你说得对不对，照样算数。</p>' +
         "</div>" +
       "</div>";
   } else if (phase === "cards") {
@@ -4769,11 +4784,13 @@ function renderDock() {
         '<span class="dock-hp-label">' + d.opponent.name + " · 还剩 " + s.hp + "</span>" +
         '<div class="dock-hp-track"><div class="dock-hp-fill" style="width:' + hpPct + '%"></div></div>' +
       "</div>" +
-      '<p class="dock-pick">挑一句递过去。挑错了他会顶回来，但你可以再挑。</p>' +
+      '<p class="dock-pick">' + (s.used.length >= (d.choices || []).length
+        ? "三张都递过了。剩下这口气，只能你自己争。"
+        : "先挑一句开场——挑错了他会顶回来，但真正打动他，得靠你自己写。") + "</p>" +
       '<div class="dock-choices">' + choices + "</div>" +
       '<p class="dock-feedback' + feedbackClass + '" id="dockFeedback">' + feedbackText + "</p>" +
       '<div class="dock-self">' +
-        '<p class="dock-self-label">不服？自己写一句</p>' +
+        '<p class="dock-self-label">把话说赢</p>' +
         '<textarea class="dock-input" id="dockInput" maxlength="300" placeholder="写下你的反驳……">' + s.text + "</textarea>" +
         '<div class="dock-self-actions">' +
           '<button class="story-primary" id="dockSubmit" type="button">说出去</button>' +
@@ -4859,6 +4876,7 @@ function rollDock() {
       paintDie(die, face);
       s.dice = face;
       s.tide = tideOf(face);
+      applyTide(s);
       s.replyLine = pickReply(s.data, s.tide);
       s.rolling = false;
       if (die) die.classList.remove("rolling");
@@ -4887,7 +4905,8 @@ function pickChoice(index) {
   if (!s || s.used.indexOf(index) !== -1) return;
   const choice = (s.data.choices || [])[index];
   if (!choice) return;
-  const damage = Number.isInteger(choice.damage) ? choice.damage : 0;
+  const raw = Number.isInteger(choice.damage) ? choice.damage : 0;
+  const damage = Math.round(raw * CHOICE_SCALE);
   s.used.push(index);
   s.hp = Math.max(0, s.hp - damage);
   s.feedback = { damage: damage, reply: choice.reply || "" };
