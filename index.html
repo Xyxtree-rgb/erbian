@@ -1796,7 +1796,9 @@ body.story-open{overflow:hidden;}
 .story-hotspot[data-evidence="ev_02"]{right:20%;top:34%;}
 .story-hotspot[data-evidence="ev_03"]{left:44%;top:19%;}
 .story-hotspot.collected{animation:none;background:#7be0bc;color:#124b39;cursor:default;}
+.story-hotspot.nudge{animation:story-nudge 1s ease-in-out infinite;}
 @keyframes story-pulse{50%{box-shadow:0 0 0 13px rgba(255,255,255,.08);}}
+@keyframes story-nudge{50%{transform:scale(1.22);box-shadow:0 0 0 20px rgba(255,255,255,.3);}}
 .story-dialogue{
   margin-top:-55px;position:relative;z-index:3;min-height:140px;padding:20px 24px;
   border:1px solid rgba(255,255,255,.82);border-radius:22px;
@@ -5945,6 +5947,44 @@ $("#homeKbBtn").onclick=function(){openDrawer();};
       });
     }
 
+    /* 取证闸门兜底：真实数据里 76 人走进断案、只有 11 人到了辩论桌，
+       八成卡在"必须点齐证据才解锁按钮"这一步。所以卡住 18 秒就放行——
+       取证是加分项，不该是拦路虎。 */
+    let gateEnterAt = 0;
+    let gateOpen = false;
+    let gateTimer = null;
+
+    function clearEvidenceGate() {
+      if (gateTimer) { clearInterval(gateTimer); gateTimer = null; }
+      document.querySelectorAll(".story-hotspot").forEach((hotspot) => hotspot.classList.remove("nudge"));
+      gateEnterAt = 0;
+      gateOpen = false;
+    }
+
+    function startEvidenceGate() {
+      if (clueMode() || gateEnterAt || !story) return;
+      gateEnterAt = Date.now();
+      window.beat && window.beat("evidence_phase", "need " + story.evidence.length);
+      gateTimer = setInterval(function () {
+        if (!story || clueMode()) { clearEvidenceGate(); return; }
+        if (collected.size >= story.evidence.length) { clearEvidenceGate(); renderEvidence(); return; }
+        const waited = (Date.now() - gateEnterAt) / 1000;
+        // 12 秒还没动手：把放大镜放大抖动，主动提示一次
+        if (waited >= 12 && !document.querySelector(".story-hotspot.nudge")) {
+          document.querySelectorAll(".story-hotspot").forEach((hotspot) => {
+            if (!hotspot.hidden && !hotspot.classList.contains("collected")) hotspot.classList.add("nudge");
+          });
+          window.beat && window.beat("gate_nudge", collected.size + "/" + story.evidence.length);
+        }
+        // 25 秒：放行。取证是加分项，不该把人拦在辩论桌外面
+        if (waited >= 25 && !gateOpen) {
+          gateOpen = true;
+          window.beat && window.beat("gate_open", collected.size + "/" + story.evidence.length);
+          renderEvidence();
+        }
+      }, 1000);
+    }
+
     function renderDialogue() {
       const node = story.story_nodes[dialogueIndex];
       displayDialogue(node);
@@ -5955,7 +5995,11 @@ $("#homeKbBtn").onclick=function(){openDrawer();};
         const belongs = story.evidence.some((item) => item.id === hotspot.dataset.evidence);
         hotspot.hidden = !finished || !belongs;
       });
-      document.getElementById("dialogueHint").textContent = finished ? "剧情已结束，点击场景中的放大镜收集证据" : "点击对话框继续 ▸";
+      if (finished) startEvidenceGate(); else clearEvidenceGate();
+      const left = story ? story.evidence.length - collected.size : 0;
+      document.getElementById("dialogueHint").textContent = finished
+        ? (left > 0 ? `场景里还有 ${left} 处疑点（⌕），点开看看` : "证据齐了，可以进辩论了")
+        : "点击对话框继续 ▸";
     }
 
     function renderEvidence() {
@@ -5972,15 +6016,21 @@ $("#homeKbBtn").onclick=function(){openDrawer();};
       // 线索模式不要求先把场景里的放大镜点完：六条线索都是在辩论桌上出示的，
       // 否则第三条之后没有热点，玩家永远进不去辩论。
       const clueOn = clueMode();
-      const ready = clueOn ? story.evidence.length > 0 : collected.size === story.evidence.length;
+      const done = collected.size >= story.evidence.length;
+      const ready = clueOn ? story.evidence.length > 0 : (done || gateOpen);
+      const left = story.evidence.length - collected.size;
       document.getElementById("evidenceCount").textContent = clueOn
         ? `线索 ${story.evidence.length} 条 · 进辩论逐一出示`
-        : `证据 ${collected.size} / ${story.evidence.length}`;
+        : done
+          ? `证据已齐 ${collected.size} / ${story.evidence.length}`
+          : gateOpen
+            ? `还剩 ${left} 处疑点 · 找不到也能直接开辩`
+            : `在场景里找出 ${left} 处疑点 ⌕`;
       const nextButton = document.getElementById("toDebate");
       nextButton.disabled = !ready;
       nextButton.textContent = clueOn
         ? (ready ? "进入对峙 · 出示线索" : "没有线索可用")
-        : (ready ? "进入辩论" : "证据未收集齐");
+        : done ? "进入辩论" : (gateOpen ? "跳过取证 · 直接开辩" : "证据未收集齐");
     }
 
     function collectEvidence(evidenceId, hotspot) {
@@ -5988,6 +6038,8 @@ $("#homeKbBtn").onclick=function(){openDrawer();};
       const evidence = story.evidence.find((item) => item.id === evidenceId);
       if (!evidence) return;
       collected.add(evidenceId);
+      window.beat && window.beat("evidence_hit",
+        evidenceId + " @" + (gateEnterAt ? Math.round((Date.now() - gateEnterAt) / 1000) : -1) + "s");
       saveProgress(false);
       hotspot.classList.add("collected");
       hotspot.textContent = "✓";
@@ -6329,7 +6381,16 @@ $("#homeKbBtn").onclick=function(){openDrawer();};
     });
     document.getElementById("toDebate").addEventListener("click", () => {
       // 线索模式不要求先收集：六条线索都在辩论桌上，场景里只挂了前三个放大镜
-      if (!clueMode() && collected.size !== story.evidence.length) return;
+      if (!clueMode() && collected.size !== story.evidence.length) {
+        // 兜底闸门已开：放行，但把没找到的证据补齐——
+        // 空着手进辩论会打不动，那不是帮他，是坑他
+        if (!gateOpen) return;
+        const missed = story.evidence.filter((item) => !collected.has(item.id));
+        missed.forEach((item) => collected.add(item.id));
+        window.beat && window.beat("gate_skip",
+          "missed " + missed.length + "/" + story.evidence.length);
+      }
+      clearEvidenceGate();
       renderDebate();
       showView(debateView);
     });
@@ -6683,6 +6744,7 @@ $("#homeKbBtn").onclick=function(){openDrawer();};
       opponentHp = 0;
       opponentMaxHp = 0;
       collected.clear();
+      clearEvidenceGate();
       selectedEvidence.clear();
       selectedKnowledge = [];
       resetClueState();
